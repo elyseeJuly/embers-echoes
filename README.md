@@ -4,7 +4,7 @@
 
 《余烬回响》(Embers Echoes) 是一款基于增量/放置机制的纯前端生存游戏。它在极简的文字与 UI 界面下，隐藏着深度的资源管理、基地建设、大地图探索以及严酷的 Rouge-lite 死亡轮回系统。
 
-你可以直接在这里体验游戏：**[▶ 立即试玩[ https://elyseejuly.github.io/embers-echoes/](#)]** 
+你可以直接在这里体验游戏：**[▶ 立即试玩（https://elyseejuly.github.io/embers-echoes/）** 
 
 ---
 
@@ -44,7 +44,7 @@
 
 1. 克隆或下载本仓库到本地：
    ```bash
-   git clone https://github.com/elyseeJuly/adarkroom.git
+   git clone https://github.com/elyseeJuly/embers-echoes.git
    ```
 2. 直接在浏览器中双击打开 `index.html` 即可运行游戏。
 3. （可选）如果你需要使用本地保存等功能，推荐使用一个轻量级的本地 HTTP 服务器启动，例如：
