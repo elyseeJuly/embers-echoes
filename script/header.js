@@ -1,34 +1,28 @@
 /**
- * Module that takes care of header buttons
+ * 余烬回响 — Header Navigation
+ * ==============================
+ * Tab bar for navigating between modules (Terminal, Map, Ship, etc.)
  */
 var Header = {
-	
-	init: function(options) {
-		this.options = $.extend(
-			this.options,
-			options
-		);
+
+	init: function () {
+		// Header tabs are added dynamically as modules unlock
 	},
-	
-	options: {}, // Nothing for now
-	
-	canTravel: function() {
-		return $('div#header div.headerButton').length > 1;
-	},
-	
-	addLocation: function(text, id, module, before) {
-    const toAdd = $('<div>').attr('id', "location_" + id)
-			.addClass('headerButton')
-			.text(text).click(function() {
-				if(Header.canTravel()) {
-					Engine.travelTo(module);
-				}
+
+	addLocation: function (name, id, module) {
+		var $tab = $('<div>')
+			.addClass('tab')
+			.attr('id', 'tab-' + id)
+			.text(name)
+			.on('click', function () {
+				Engine.travelTo(module);
 			});
-      
-    if (before && $(`#location_${before}`).length > 0) {
-      return toAdd.insertBefore(`#location_${before}`);
-    }
-    
-    return toAdd.appendTo($('div#header'));
+
+		$('#ee-header').append($tab);
+		return $tab;
+	},
+
+	removeLocation: function (id) {
+		$('#tab-' + id).remove();
 	}
 };

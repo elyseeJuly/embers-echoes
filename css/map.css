@@ -1,0 +1,163 @@
+/* ══════════════════════════════════════════════════════════════
+   余烬回响 — Map & Combat CSS Styles
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Rift Map Viewport ─────────────────────────────────────── */
+
+#map-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+#map-viewport {
+  background: var(--surface-2);
+  border: 1px solid var(--border-dim);
+  border-radius: 4px;
+  padding: 8px;
+  font-family: var(--font-terminal);
+  line-height: 1;
+  user-select: none;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+.map-grid {
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+.map-grid td {
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 14px;
+  cursor: default;
+}
+
+/* Base Nodes */
+.map-player { color: var(--glow-cyan); font-weight: bold; animation: pulse-glow 2s infinite; }
+.map-fog { color: var(--surface-3); opacity: 0.3; }
+.map-dim { opacity: 0.5; }
+
+/* Discovery nodes */
+.map-tile-\. { color: var(--ash-dim); }
+.map-tile-\# { color: var(--ash-gray); }
+.map-tile-\, { color: var(--ash-dim); }
+.map-tile-\* { color: var(--blood-red); text-shadow: 0 0 8px var(--blood-red); }
+.map-tile-C { color: var(--ember-orange); text-shadow: 0 0 5px var(--ember-orange); }
+.map-tile-H { color: var(--erosion-green); font-weight: bold; }
+.map-tile-\@ { color: var(--glow-purple); font-weight: bold; animation: pulse-glow 1.5s infinite; }
+
+.map-moveable { cursor: pointer; transition: background 0.2s; }
+.map-moveable:hover { background: rgba(255, 255, 255, 0.1); }
+
+/* ── Survival Panel ────────────────────────────────────────── */
+
+#survival-panel {
+  display: none;
+  margin-top: 15px;
+}
+
+#survival-gauges {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-dim);
+  padding-bottom: 12px;
+}
+
+.survival-gauge {
+  font-size: 0.8rem;
+  color: var(--ash-gray);
+  display: flex;
+  justify-content: space-between;
+}
+
+.survival-gauge .val {
+  font-weight: bold;
+}
+
+#loot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--ash-light);
+}
+
+/* ── Combat Engine ─────────────────────────────────────────── */
+
+#combat-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+}
+
+#combat-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.combat-fighter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 15px;
+  border: 1px solid var(--border-dim);
+  border-radius: 4px;
+  width: 45%;
+  background: var(--surface-2);
+}
+
+.player-side { border-color: var(--glow-cyan); }
+.enemy-side { border-color: var(--blood-red); }
+
+.fighter-name {
+  font-size: 0.9rem;
+  color: var(--ash-light);
+  text-transform: uppercase;
+}
+.player-side .fighter-name { color: var(--glow-cyan); }
+.enemy-side .fighter-name { color: var(--blood-red); }
+
+.fighter-hp {
+  font-family: var(--font-terminal);
+  font-size: 1.2rem;
+  color: var(--ember-glow);
+}
+
+.atb-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--surface-3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.atb-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--ember-orange);
+  transition: width 0.1s linear;
+}
+
+.player-side .atb-fill { background: var(--glow-cyan); }
+.enemy-side .atb-fill { background: var(--blood-red); }
+
+#combat-controls {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+#combat-controls .ee-btn {
+  flex: 1 1 100px;
+}

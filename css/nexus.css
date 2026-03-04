@@ -1,0 +1,246 @@
+/* ══════════════════════════════════════════════════════════════
+   余烬回响 — Nexus (Base Building) Styles
+   ══════════════════════════════════════════════════════════════ */
+
+#nexus-panel {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity var(--transition-slow), transform var(--transition-slow);
+    pointer-events: none;
+}
+
+#nexus-panel.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+}
+
+/* ── Building Groups ───────────────────────────────────────── */
+.nexus-section {
+    margin-bottom: var(--space-md);
+}
+
+.nexus-section-title {
+    font-family: var(--font-terminal);
+    font-size: 0.65rem;
+    color: var(--ash-dim);
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    margin-bottom: var(--space-sm);
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--border-dim);
+}
+
+/* ── Building Rows ─────────────────────────────────────────── */
+.nexus-build-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid rgba(138, 138, 154, 0.04);
+    transition: background var(--transition-fast);
+}
+
+.nexus-build-row:hover {
+    background: rgba(255, 106, 0, 0.02);
+}
+
+.nexus-build-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.nexus-build-name {
+    font-size: 0.85rem;
+    color: var(--ash-light);
+    margin-bottom: 2px;
+}
+
+.nexus-build-desc {
+    font-size: 0.7rem;
+    color: var(--ash-dim);
+}
+
+.nexus-build-count {
+    font-family: var(--font-terminal);
+    font-size: 0.75rem;
+    color: var(--ember-glow);
+    min-width: 50px;
+    text-align: center;
+}
+
+.nexus-build-btn {
+    margin-left: var(--space-sm);
+}
+
+/* ── Worker Panel ──────────────────────────────────────────── */
+#worker-panel {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity var(--transition-slow), transform var(--transition-slow);
+    pointer-events: none;
+}
+
+#worker-panel.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+}
+
+.worker-summary {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    margin-bottom: var(--space-sm);
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--border-dim);
+}
+
+.worker-summary .pop-count {
+    color: var(--ember-glow);
+}
+
+.worker-summary .pop-label {
+    color: var(--ash-dim);
+}
+
+/* ── Income Display ────────────────────────────────────────── */
+.income-display {
+    margin-top: var(--space-sm);
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--border-dim);
+}
+
+.income-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    padding: 2px 0;
+}
+
+.income-name {
+    color: var(--ash-dim);
+}
+
+.income-val {
+    font-family: var(--font-terminal);
+}
+
+.income-val.positive {
+    color: var(--erosion-green);
+}
+
+.income-val.negative {
+    color: var(--blood-red);
+}
+
+/* ── Merchant Popup ────────────────────────────────────────── */
+#merchant-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 10, 15, 0.85);
+    z-index: var(--z-modal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal);
+}
+
+#merchant-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.merchant-panel {
+    background: var(--surface-2);
+    border: 1px solid var(--glow-purple);
+    border-radius: 4px;
+    padding: var(--space-lg);
+    max-width: 400px;
+    width: 90%;
+    box-shadow:
+        0 0 30px rgba(168, 85, 247, 0.1),
+        0 0 60px rgba(168, 85, 247, 0.05);
+    animation: merchantIn 0.4s ease-out;
+}
+
+.merchant-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--glow-purple), transparent);
+}
+
+@keyframes merchantIn {
+    0% {
+        transform: scale(0.9) translateY(20px);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+.merchant-title {
+    font-family: var(--font-terminal);
+    font-size: 0.9rem;
+    color: var(--glow-purple);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: var(--space-md);
+}
+
+.merchant-timer {
+    font-size: 0.7rem;
+    color: var(--ash-dim);
+    margin-bottom: var(--space-md);
+}
+
+.merchant-timer .time {
+    color: var(--glow-purple);
+    font-weight: 500;
+}
+
+.merchant-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.1);
+}
+
+.merchant-item-name {
+    font-size: 0.8rem;
+    color: var(--ash-light);
+}
+
+.merchant-item-desc {
+    font-size: 0.65rem;
+    color: var(--ash-dim);
+    margin-top: 2px;
+}
+
+.merchant-item-cost {
+    font-size: 0.7rem;
+    color: var(--glow-purple);
+}
+
+.merchant-buy-btn {
+    color: var(--glow-purple);
+    border-color: var(--glow-purple);
+}
+
+.merchant-buy-btn:hover {
+    background: rgba(168, 85, 247, 0.1);
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.15);
+}

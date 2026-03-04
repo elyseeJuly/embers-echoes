@@ -1,0 +1,155 @@
+/* ══════════════════════════════════════════════════════════════
+   余烬回响 — Terminal Panel Styles
+   ══════════════════════════════════════════════════════════════ */
+
+#terminal-panel {
+    min-height: 200px;
+    position: relative;
+}
+
+/* ── Null Phase — Total black, single button centered ──────── */
+.phase-null #terminal-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    background: transparent;
+    border-color: transparent;
+}
+
+.phase-null #terminal-panel::before {
+    display: none;
+}
+
+.phase-null #btn-restart {
+    animation: pulse-glow 3s ease-in-out infinite;
+    font-size: 1rem;
+    padding: var(--space-md) var(--space-xl);
+    border-width: 2px;
+}
+
+/* ── Terminal Narrative Text ───────────────────────────────── */
+#terminal-narrative {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+#terminal-narrative p {
+    font-family: var(--font-terminal);
+    font-size: 0.85rem;
+    color: var(--ash-gray);
+    line-height: 1.7;
+    opacity: 0;
+    transform: translateY(5px);
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+#terminal-narrative p:nth-child(1) {
+    animation-delay: 0s;
+}
+
+#terminal-narrative p:nth-child(2) {
+    animation-delay: 0.3s;
+}
+
+#terminal-narrative p:nth-child(3) {
+    animation-delay: 0.6s;
+}
+
+#terminal-narrative p:nth-child(4) {
+    animation-delay: 0.9s;
+}
+
+#terminal-narrative p:nth-child(5) {
+    animation-delay: 1.2s;
+}
+
+#terminal-narrative p .highlight {
+    color: var(--ember-orange);
+}
+
+/* ── Spark Phase — Extract ember button ────────────────────── */
+#spark-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+}
+
+#btn-extract {
+    position: relative;
+}
+
+#btn-extract .extract-flash {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle, var(--ember-orange), transparent);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    pointer-events: none;
+}
+
+#btn-extract .extract-flash.active {
+    animation: extractFlash 0.4s ease-out forwards;
+}
+
+@keyframes extractFlash {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(3);
+        opacity: 0;
+    }
+}
+
+/* ── Ember Counter ─────────────────────────────────────────── */
+#ember-counter {
+    font-family: var(--font-terminal);
+    font-size: 0.8rem;
+    color: var(--ember-glow);
+    margin-top: var(--space-sm);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+}
+
+#ember-counter.visible {
+    opacity: 1;
+}
+
+#ember-counter .count {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--ember-orange);
+    text-shadow: 0 0 10px rgba(255, 106, 0, 0.3);
+}
+
+/* ── Blinking Cursor ───────────────────────────────────────── */
+.cursor-blink::after {
+    content: '█';
+    color: var(--ember-orange);
+    animation: cursorBlink 1s step-end infinite;
+    margin-left: 2px;
+    font-size: 0.8em;
+}
+
+@keyframes cursorBlink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+}

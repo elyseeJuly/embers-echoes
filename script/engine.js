@@ -1,942 +1,512 @@
-(function() {
+/**
+ * 余烬回响 (Embers Echoes) — Core Engine
+ * ========================================
+ * Global tick driver, phase management, save/load, UI navigation.
+ * Replaces the original ADR engine.js.
+ */
+(function () {
+  'use strict';
+
   var Engine = window.Engine = {
 
-    SITE_URL: encodeURIComponent("http://adarkroom.doublespeakgames.com"),
-    VERSION: 1.3,
+    VERSION: '0.1.0',
+    SITE_URL: '',
     MAX_STORE: 99999999999999,
     SAVE_DISPLAY: 30 * 1000,
     GAME_OVER: false,
 
-    //object event types
-    topics: {},
+    // Global tick interval (ms)
+    TICK_INTERVAL: 1000,
+    // Auto-save interval (ms)
+    SAVE_INTERVAL: 10 * 1000,
 
+    // Phase enum
+    PHASES: {
+      NULL: 0,  // 零维 — total black
+      SPARK: 1,  // 生火 — manual clicking
+      CAMP: 2,  // 基建 — automation unlocked
+      ABYSS: 3,  // 污染 — SAN/erosion active
+      MAP: 4,  // 跃迁 — rift map unlocked
+      SINK: 5,  // 奇观 — matrix sink unlocked
+      END: 6   // 终局 — final sequence
+    },
+
+    // Perks (re-themed)
     Perks: {
-      'boxer': {
-        name: _('boxer'),
-        desc: _('punches do more damage'),
-        /// TRANSLATORS : means with more force.
-        notify: _('learned to throw punches with purpose')
+      'spatial_fold': {
+        name: '空间折叠',
+        desc: '负重上限 +20',
+        notify: '学会了折叠空间的技巧'
       },
-      'martial artist': {
-        name: _('martial artist'),
-        desc: _('punches do even more damage.'),
-        notify: _('learned to fight quite effectively without weapons')
+      'cognitive_filter': {
+        name: '认知滤网',
+        desc: '移动消耗SAN降低30%',
+        notify: '意识边界变得清晰'
       },
-      'unarmed master': {
-        /// TRANSLATORS : master of unarmed combat
-        name: _('unarmed master'),
-        desc: _('punch twice as fast, and with even more force'),
-        notify: _('learned to strike faster without weapons')
+      'ember_reflux': {
+        name: '余烬回流',
+        desc: '余烬产出 +15%',
+        notify: '余烬在指尖回旋'
       },
-      'barbarian': {
-        name: _('barbarian'),
-        desc: _('melee weapons deal more damage'),
-        notify: _('learned to swing weapons with force')
+      'data_blade_mastery': {
+        name: '数据刃精通',
+        desc: '近战伤害 +50%',
+        notify: '掌握了数据刃的共振频率'
       },
-      'slow metabolism': {
-        name: _('slow metabolism'),
-        desc: _('go twice as far without eating'),
-        notify: _('learned how to ignore the hunger')
+      'pulse_precision': {
+        name: '脉冲精准',
+        desc: '远程命中率 +20%',
+        notify: '瞄准变得本能化'
       },
-      'desert rat': {
-        name: _('desert rat'),
-        desc: _('go twice as far without drinking'),
-        notify: _('learned to love the dry air')
+      'void_walker': {
+        name: '虚空行者',
+        desc: '视野范围 +2',
+        notify: '学会了感知虚空的脉动'
       },
-      'evasive': {
-        name: _('evasive'),
-        desc: _('dodge attacks more effectively'),
-        notify: _("learned to be where they're not")
-      },
-      'precise': {
-        name: _('precise'),
-        desc: _('land blows more often'),
-        notify: _('learned to predict their movement')
-      },
-      'scout': {
-        name: _('scout'),
-        desc: _('see farther'),
-        notify: _('learned to look ahead')
-      },
-      'stealthy': {
-        name: _('stealthy'),
-        desc: _('better avoid conflict in the wild'),
-        notify: _('learned how not to be seen')
-      },
-      'gastronome': {
-        name: _('gastronome'),
-        desc: _('restore more health when eating'),
-        notify: _('learned to make the most of food')
+      'entropy_resist': {
+        name: '熵抗',
+        desc: '侵蚀度增长速度 -25%',
+        notify: '身体对混乱产生了抗性'
       }
     },
 
     options: {
       state: null,
       debug: false,
-      log: false,
-      dropbox: false,
-      doubleTime: false
+      log: false
     },
 
-    init: function(options) {
-      this.options = $.extend(
-        this.options,
-        options
-      );
-      this._debug = this.options.debug;
-      this._log = this.options.log;
+    topics: {},
 
-      // Check for HTML5 support
-      if(!Engine.browserValid()) {
-        window.location = 'browserWarning.html';
+    activeModule: null,
+    ticking: false,
+    _tickTimer: null,
+    _saveTimer: null,
+    _incomeTimer: null,
+
+    /**
+     * Initialize the engine
+     */
+    init: function (options) {
+      this.options = $.extend(this.options, options);
+
+      // Initialize state manager
+      if (this.options.state) {
+        window.$SM.init(this.options);
       }
 
-      // Check for mobile
-      if(Engine.isMobile()) {
-        window.location = 'mobileWarning.html';
-      }
-
-      Engine.disableSelection();
-
-      if(this.options.state != null) {
-        window.State = this.options.state;
-      } else {
+      // Try to load saved game
+      if (!this.options.state) {
         Engine.loadGame();
       }
 
-      // start loading music and events early
-      for (var key in AudioLibrary) {
-        if (
-          key.toString().indexOf('MUSIC_') > -1 ||
-          key.toString().indexOf('EVENT_') > -1) {
-            AudioEngine.loadAudioFile(AudioLibrary[key]);
-          }
-      }
+      // Initialize modules in order
+      // (they self-register and show/hide based on phase)
+      Terminal.init();
+      Nexus.init();
+      Population.init();
 
-      $('<div>').attr('id', 'locationSlider').appendTo('#main');
+      // Set up autosave
+      Engine._saveTimer = setInterval(function () {
+        Engine.saveGame();
+      }, Engine.SAVE_INTERVAL);
 
-      var menu = $('<div>')
-        .addClass('menu')
-        .appendTo('body');
+      // Start the global tick
+      Engine.startTick();
 
-      if(typeof langs != 'undefined'){
-        var customSelect = $('<span>')
-          .addClass('customSelect')
-          .addClass('menuBtn')
-          .appendTo(menu);
-        var selectOptions = $('<span>')
-          .addClass('customSelectOptions')
-          .appendTo(customSelect);
-        var optionsList = $('<ul>')
-          .appendTo(selectOptions);
-        $('<li>')
-          .text("language.")
-          .appendTo(optionsList);
+      // Check for offline gains
+      Engine.processOfflineTime();
 
-        $.each(langs, function(name,display){
-          $('<li>')
-            .text(display)
-            .attr('data-language', name)
-            .on("click", function() { Engine.switchLanguage(this); })
-            .appendTo(optionsList);
-        });
-      }
+      // Apply current phase visuals
+      Engine.applyPhaseVisuals();
 
-      $('<span>')
-        .addClass('volume menuBtn')
-        .text(_('sound on.'))
-        .click(() => Engine.toggleVolume())
-        .appendTo(menu);
+      // Keyboard bindings
+      $(document).on('keydown', Engine.keyDown);
+      $(document).on('keyup', Engine.keyUp);
 
-      $('<span>')
-        .addClass('appStore menuBtn')
-        .text(_('get the app.'))
-        .click(Engine.getApp)
-        .appendTo(menu);
-
-      $('<span>')
-        .addClass('lightsOff menuBtn')
-        .text(_('lights off.'))
-        .click(Engine.turnLightsOff)
-        .appendTo(menu);
-
-      $('<span>')
-        .addClass('hyper menuBtn')
-        .text(_('hyper.'))
-        .click(Engine.confirmHyperMode)
-        .appendTo(menu);
-
-      $('<span>')
-        .addClass('menuBtn')
-        .text(_('restart.'))
-        .click(Engine.confirmDelete)
-        .appendTo(menu);
-
-      $('<span>')
-        .addClass('menuBtn')
-        .text(_('share.'))
-        .click(Engine.share)
-        .appendTo(menu);
-
-      $('<span>')
-        .addClass('menuBtn')
-        .text(_('save.'))
-        .click(Engine.exportImport)
-        .appendTo(menu);
-
-      if(this.options.dropbox && Engine.Dropbox) {
-        this.dropbox = Engine.Dropbox.init();
-
-        $('<span>')
-          .addClass('menuBtn')
-          .text(_('dropbox.'))
-          .click(Engine.Dropbox.startDropbox)
-          .appendTo(menu);
-      }
-
-      $('<span>')
-        .addClass('menuBtn')
-        .text(_('github.'))
-        .click(function() { window.open('https://github.com/doublespeakgames/adarkroom'); })
-        .appendTo(menu);
-
-      // Register keypress handlers
-      $('body').off('keydown').keydown(Engine.keyDown);
-      $('body').off('keyup').keyup(Engine.keyUp);
-
-      // Register swipe handlers
-      swipeElement = $('#outerSlider');
-      swipeElement.on('swipeleft', Engine.swipeLeft);
-      swipeElement.on('swiperight', Engine.swipeRight);
-      swipeElement.on('swipeup', Engine.swipeUp);
-      swipeElement.on('swipedown', Engine.swipeDown);
-
-      // subscribe to stateUpdates
+      // Subscribe to state updates
       $.Dispatch('stateUpdate').subscribe(Engine.handleStateUpdates);
 
-      $SM.init();
-      AudioEngine.init();
-      Notifications.init();
-      Events.init();
-      Room.init();
-
-
-      if(typeof $SM.get('stores.wood') != 'undefined') {
-        Outside.init();
-      }
-      if($SM.get('stores.compass', true) > 0) {
-        Path.init();
-      }
-      if ($SM.get('features.location.fabricator')) {
-        Fabricator.init();
-      }
-      if($SM.get('features.location.spaceShip')) {
-        Ship.init();
-      }
-
-      if($SM.get('config.lightsOff', true)){
-        Engine.turnLightsOff();
-      }
-
-      if($SM.get('config.hyperMode', true)){
-        Engine.triggerHyperMode();
-      }
-
-      Engine.toggleVolume(Boolean($SM.get('config.soundOn')));
-      if(!AudioEngine.isAudioContextRunning()){
-        document.addEventListener('click', Engine.resumeAudioContext, true);
-      }
-      
-      Engine.saveLanguage();
-      Engine.travelTo(Room);
-
-      setTimeout(notifyAboutSound, 3000);
-
-    },
-    resumeAudioContext: function () {
-      AudioEngine.tryResumingAudioContext();
-      
-      // turn on music!
-          AudioEngine.setMasterVolume($SM.get('config.soundOn') ? 1.0 : 0.0, 0);
-
-      document.removeEventListener('click', Engine.resumeAudioContext);
-    },
-    browserValid: function() {
-      return ( location.search.indexOf( 'ignorebrowser=true' ) >= 0 || ( typeof Storage != 'undefined' && !oldIE ) );
+      Engine.log('Engine initialized. Phase: ' + Engine.getPhase());
     },
 
-    isMobile: function() {
-      return ( location.search.indexOf( 'ignorebrowser=true' ) < 0 && /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test( navigator.userAgent ) );
+    // ── Tick System ───────────────────────────────────────────
+
+    startTick: function () {
+      if (Engine.ticking) return;
+      Engine.ticking = true;
+      Engine._tickTimer = setInterval(Engine.tick, Engine.TICK_INTERVAL);
     },
 
-    saveGame: function() {
-      if(typeof Storage != 'undefined' && localStorage) {
-        if(Engine._saveTimer != null) {
-          clearTimeout(Engine._saveTimer);
+    stopTick: function () {
+      Engine.ticking = false;
+      clearInterval(Engine._tickTimer);
+    },
+
+    /**
+     * Global tick — called every 1000ms
+     * Drives all automation, SAN decay, erosion, etc.
+     */
+    tick: function () {
+      if (Engine.GAME_OVER) return;
+
+      var phase = Engine.getPhase();
+
+      // Phase 2+: collect worker income (atomic settlement)
+      if (phase >= Engine.PHASES.CAMP) {
+        $SM.collectIncome();
+      }
+
+      // Phase 3+: SAN and Erosion processing
+      if (phase >= Engine.PHASES.ABYSS) {
+        if (typeof Sanity !== 'undefined') {
+          Sanity.tick();
         }
-        if(typeof Engine._lastNotify == 'undefined' || Date.now() - Engine._lastNotify > Engine.SAVE_DISPLAY){
-          $('#saveNotify').css('opacity', 1).animate({opacity: 0}, 1000, 'linear');
-          Engine._lastNotify = Date.now();
+      }
+
+      // Phase 5: Matrix sink passive
+      if (phase >= Engine.PHASES.SINK) {
+        if (typeof MatrixSink !== 'undefined') {
+          MatrixSink.tick();
         }
-        localStorage.gameState = JSON.stringify(State);
+      }
+
+      // Update stores display
+      Engine.updateStoresView();
+
+      // Fire the tick event for any listeners
+      $.Dispatch('tick').publish();
+    },
+
+    // ── Phase Management ──────────────────────────────────────
+
+    getPhase: function () {
+      return $SM.get('game.phase') || Engine.PHASES.NULL;
+    },
+
+    setPhase: function (phase) {
+      var oldPhase = Engine.getPhase();
+      if (phase <= oldPhase) return; // can only advance
+      $SM.set('game.phase', phase);
+      Engine.onPhaseChange(oldPhase, phase);
+    },
+
+    onPhaseChange: function (oldPhase, newPhase) {
+      Engine.log('Phase change: ' + oldPhase + ' → ' + newPhase);
+
+      // Flash effect on phase transition
+      if (newPhase > Engine.PHASES.SPARK) {
+        Engine.flashPhaseTransition();
+      }
+
+      Engine.applyPhaseVisuals();
+
+      // Notify modules of phase change
+      $.Dispatch('phaseChange').publish({ from: oldPhase, to: newPhase });
+    },
+
+    /**
+     * Check if a phase upgrade is available
+     */
+    checkPhaseUnlock: function () {
+      var phase = Engine.getPhase();
+
+      // NULL → SPARK: always available (button click)
+      // SPARK → CAMP: ember >= 50
+      if (phase === Engine.PHASES.SPARK) {
+        var ember = $SM.get('stores.ember') || 0;
+        if (ember >= 50) {
+          Engine.setPhase(Engine.PHASES.CAMP);
+          Notifications.notify('结构节点已激活。迷失者开始聚集。');
+        }
+      }
+      // CAMP → ABYSS: ember >= 200 or gray matter >= 50
+      else if (phase === Engine.PHASES.CAMP) {
+        var ember = $SM.get('stores.ember') || 0;
+        var gray = $SM.get('stores.grayMatter') || 0;
+        if (ember >= 200 || gray >= 50) {
+          Engine.setPhase(Engine.PHASES.ABYSS);
+          Notifications.notify('深渊在低语。理智开始动摇。');
+        }
+      }
+      // ABYSS → MAP: first rift coordinate synthesized
+      else if (phase === Engine.PHASES.ABYSS) {
+        if ($SM.get('game.hasRiftCoord')) {
+          Engine.setPhase(Engine.PHASES.MAP);
+          Notifications.notify('裂隙坐标已锁定。维度之门开启。');
+        }
       }
     },
 
-    loadGame: function() {
+    applyPhaseVisuals: function () {
+      var phase = Engine.getPhase();
+      var $body = $('body');
+      $body.removeClass('phase-null phase-spark phase-camp phase-abyss phase-map phase-sink phase-end');
+
+      switch (phase) {
+        case Engine.PHASES.NULL:
+          $body.addClass('phase-null');
+          break;
+        case Engine.PHASES.SPARK:
+          $body.addClass('phase-spark');
+          break;
+        case Engine.PHASES.CAMP:
+          $body.addClass('phase-camp');
+          break;
+        case Engine.PHASES.ABYSS:
+          $body.addClass('phase-abyss');
+          break;
+        case Engine.PHASES.MAP:
+          $body.addClass('phase-map');
+          break;
+        case Engine.PHASES.SINK:
+          $body.addClass('phase-sink');
+          break;
+        case Engine.PHASES.END:
+          $body.addClass('phase-end');
+          break;
+      }
+
+      // Show/hide right panel (stores)
+      if (phase >= Engine.PHASES.SPARK) {
+        $('#ee-right').addClass('visible');
+      }
+    },
+
+    flashPhaseTransition: function () {
+      var $flash = $('<div>').addClass('phase-flash').appendTo('body');
+      setTimeout(function () { $flash.remove(); }, 1000);
+    },
+
+    // ── Module Navigation ─────────────────────────────────────
+
+    travelTo: function (module) {
+      if (Engine.activeModule === module) return;
+      var oldModule = Engine.activeModule;
+      Engine.activeModule = module;
+
+      // Update header tabs
+      $('#ee-header .tab').removeClass('active');
+      if (module && module.tabId) {
+        $('#' + module.tabId).addClass('active');
+      }
+
+      // Call onArrival
+      if (module && module.onArrival) {
+        module.onArrival();
+      }
+    },
+
+    // ── Store Display ─────────────────────────────────────────
+
+    updateStoresView: function () {
+      var stores = $SM.get('stores');
+      if (!stores) return;
+
+      var $container = $('#stores-panel .ee-stores');
+      if ($container.length === 0) return;
+
+      var storeList = [
+        { key: 'ember', name: '余烬', show: true },
+        { key: 'grayMatter', name: '灰质', show: Engine.getPhase() >= Engine.PHASES.CAMP },
+        { key: 'whispers', name: '低语值', show: Engine.getPhase() >= Engine.PHASES.ABYSS },
+        { key: 'concentrate', name: '高能浓缩液', show: Engine.getPhase() >= Engine.PHASES.MAP }
+      ];
+
+      for (var i = 0; i < storeList.length; i++) {
+        var s = storeList[i];
+        if (!s.show) continue;
+
+        var val = stores[s.key] || 0;
+        var cap = $SM.getStorageCap(s.key);
+        var $row = $('#store-' + s.key);
+
+        if ($row.length === 0 && val > 0) {
+          $row = $('<div>').attr('id', 'store-' + s.key).addClass('ee-store-row fade-in');
+          $('<span>').addClass('ee-store-name').text(s.name).appendTo($row);
+          $('<div>').addClass('ee-store-bar')
+            .append($('<div>').addClass('ee-store-bar-fill'))
+            .appendTo($row);
+          $('<span>').addClass('ee-store-val').appendTo($row);
+
+          // Dynamic tooltips for resources
+          if (typeof Narrative !== 'undefined' && Narrative.dict && Narrative.dict.resourcesLore) {
+            if (Narrative.dict.resourcesLore[s.key]) {
+              $row.attr('title', Narrative.dict.resourcesLore[s.key]).css('cursor', 'help');
+            }
+          }
+
+          $container.append($row);
+        }
+
+        if ($row.length > 0) {
+          $row.find('.ee-store-val').text(Math.floor(val) + (cap < Engine.MAX_STORE ? '/' + cap : ''));
+          var pct = cap > 0 ? Math.min(100, (val / cap) * 100) : 0;
+          $row.find('.ee-store-bar-fill').css('width', pct + '%');
+        }
+      }
+
+      // Add tooltips to existing hard-coded SAN and ERO meters in the DOM if possible
+      var $sanMeter = $('#ee-san-meter');
+      var $eroMeter = $('#ee-ero-meter');
+      if (typeof Narrative !== 'undefined' && Narrative.dict && Narrative.dict.resourcesLore) {
+        if ($sanMeter.length > 0 && !$sanMeter.parent().attr('title')) {
+          $sanMeter.parent().attr('title', Narrative.dict.resourcesLore.suppression).css('cursor', 'help');
+        }
+        if ($eroMeter.length > 0 && !$eroMeter.parent().attr('title')) {
+          $eroMeter.parent().attr('title', Narrative.dict.resourcesLore.erosion).css('cursor', 'help');
+        }
+      }
+    },
+
+    // ── Save / Load ───────────────────────────────────────────
+
+    saveGame: function () {
+      if (typeof Storage !== 'undefined' && localStorage) {
+        try {
+          var state = JSON.stringify($SM.options.state);
+          localStorage.setItem('embersEchoes_save', state);
+          localStorage.setItem('embersEchoes_timestamp', Date.now().toString());
+
+          // Show save notification briefly
+          var $notify = $('#saveNotify');
+          $notify.addClass('visible');
+          setTimeout(function () { $notify.removeClass('visible'); }, 1000);
+        } catch (e) {
+          Engine.log('Save failed: ' + e.message);
+        }
+      }
+    },
+
+    loadGame: function () {
+      if (typeof Storage !== 'undefined' && localStorage) {
+        try {
+          var savedState = localStorage.getItem('embersEchoes_save');
+          if (savedState) {
+            var state = JSON.parse(savedState);
+            $SM.init({ state: state });
+            Engine.log('Game loaded from save');
+            return true;
+          }
+        } catch (e) {
+          Engine.log('Load failed: ' + e.message);
+        }
+      }
+      // No save found — initialize fresh state
+      $SM.init({});
+      return false;
+    },
+
+    /**
+     * Process offline time for resource gains
+     */
+    processOfflineTime: function () {
+      var lastTimestamp = localStorage.getItem('embersEchoes_timestamp');
+      if (!lastTimestamp) return;
+
+      var elapsed = Date.now() - parseInt(lastTimestamp);
+      if (elapsed < 5000) return; // less than 5s, ignore
+
+      var ticks = Math.floor(elapsed / Engine.TICK_INTERVAL);
+      var maxOfflineTicks = 3600; // cap at 1 hour of offline time
+      ticks = Math.min(ticks, maxOfflineTicks);
+
+      if (ticks <= 0 || Engine.getPhase() < Engine.PHASES.CAMP) return;
+
+      Engine.log('Processing ' + ticks + ' offline ticks');
+
+      // Simulate offline income (resources fill up to cap, no SAN/erosion degradation)
+      var income = $SM.getNetIncome();
+      for (var resource in income) {
+        if (income[resource] > 0) {
+          var amount = income[resource] * ticks;
+          var current = $SM.get('stores.' + resource) || 0;
+          var cap = $SM.getStorageCap(resource);
+          var newVal = Math.min(current + amount, cap);
+          $SM.set('stores.' + resource, newVal, true);
+        }
+      }
+
+      // Notify player
+      var minutesOffline = Math.floor(elapsed / 60000);
+      if (minutesOffline >= 1) {
+        Notifications.notify('离线 ' + minutesOffline + ' 分钟。资源已收集。');
+      }
+    },
+
+    // ── Export / Import ───────────────────────────────────────
+
+    export64: function () {
+      var state = JSON.stringify($SM.options.state);
+      return btoa(encodeURIComponent(state));
+    },
+
+    import64: function (string64) {
       try {
-        var savedState = JSON.parse(localStorage.gameState);
-        if(savedState) {
-          State = savedState;
-          $SM.updateOldState();
-          Engine.log("loaded save!");
-        }
-      } catch(e) {
-        State = {};
-        $SM.set('version', Engine.VERSION);
-        Engine.event('progress', 'new game');
+        var state = JSON.parse(decodeURIComponent(atob(string64)));
+        $SM.init({ state: state });
+        Engine.saveGame();
+        location.reload();
+      } catch (e) {
+        Notifications.notify('导入失败：数据格式错误');
       }
     },
 
-    exportImport: function() {
-      Events.startEvent({
-        title: _('Export / Import'),
-        scenes: {
-          start: {
-            text: [
-              _('export or import save data, for backing up'),
-              _('or migrating computers')
-            ],
-            buttons: {
-              'export': {
-                text: _('export'),
-                nextScene: {1: 'inputExport'}
-              },
-              'import': {
-                text: _('import'),
-                nextScene: {1: 'confirm'}
-              },
-              'cancel': {
-                text: _('cancel'),
-                nextScene: 'end'
-              }
-            }
-          },
-          'inputExport': {
-            text: [_('save this.')],
-            textarea: Engine.export64(),
-            onLoad: function() { Engine.event('progress', 'export'); },
-            readonly: true,
-            buttons: {
-              'done': {
-                text: _('got it'),
-                nextScene: 'end',
-                onChoose: Engine.disableSelection
-              }
-            }
-          },
-          'confirm': {
-            text: [
-              _('are you sure?'),
-              _('if the code is invalid, all data will be lost.'),
-              _('this is irreversible.')
-            ],
-            buttons: {
-              'yes': {
-                text: _('yes'),
-                nextScene: {1: 'inputImport'},
-                onChoose: Engine.enableSelection
-              },
-              'no': {
-                text: _('no'),
-                nextScene: {1: 'start'}
-              }
-            }
-          },
-          'inputImport': {
-            text: [_('put the save code here.')],
-            textarea: '',
-            buttons: {
-              'okay': {
-                text: _('import'),
-                nextScene: 'end',
-                onChoose: Engine.import64
-              },
-              'cancel': {
-                text: _('cancel'),
-                nextScene: 'end'
-              }
-            }
-          }
-        }
-      });
-    },
-
-    generateExport64: function(){
-      var string64 = Base64.encode(localStorage.gameState);
-      string64 = string64.replace(/\s/g, '');
-      string64 = string64.replace(/\./g, '');
-      string64 = string64.replace(/\n/g, '');
-
-      return string64;
-    },
-
-    export64: function() {
-      Engine.saveGame();
-      Engine.enableSelection();
-      return Engine.generateExport64();
-    },
-
-    import64: function(string64) {
-      Engine.event('progress', 'import');
-      Engine.disableSelection();
-      string64 = string64.replace(/\s/g, '');
-      string64 = string64.replace(/\./g, '');
-      string64 = string64.replace(/\n/g, '');
-      var decodedSave = Base64.decode(string64);
-      localStorage.gameState = decodedSave;
-      location.reload();
-    },
-
-    event: function(cat, act) {
-      if(typeof ga === 'function') {
-        ga('send', 'event', cat, act);
-      }
-    },
-
-    confirmDelete: function() {
-      Events.startEvent({
-        title: _('Restart?'),
-        scenes: {
-          start: {
-            text: [_('restart the game?')],
-            buttons: {
-              'yes': {
-                text: _('yes'),
-                nextScene: 'end',
-                onChoose: Engine.deleteSave
-              },
-              'no': {
-                text: _('no'),
-                nextScene: 'end'
-              }
-            }
-          }
-        }
-      });
-    },
-
-    deleteSave: function(noReload) {
-      if(typeof Storage != 'undefined' && localStorage) {
-        var prestige = Prestige.get();
-        window.State = {};
-        localStorage.clear();
-        Prestige.set(prestige);
-      }
-      if(!noReload) {
+    deleteSave: function () {
+      if (typeof Storage !== 'undefined' && localStorage) {
+        localStorage.removeItem('embersEchoes_save');
+        localStorage.removeItem('embersEchoes_timestamp');
         location.reload();
       }
     },
 
-    getApp: function() {
-      Events.startEvent({
-        title: _('Get the App'),
-        scenes: {
-          start: {
-            text: [_('bring the room with you.')],
-            buttons: {
-              'ios': {
-                text: _('ios'),
-                nextScene: 'end',
-                onChoose: function () {
-                  window.open('https://itunes.apple.com/app/apple-store/id736683061?pt=2073437&ct=adrproper&mt=8');
-                }
-              },
-              'android': {
-                text: _('android'),
-                nextScene: 'end',
-                onChoose: function() {
-                  window.open('https://play.google.com/store/apps/details?id=com.yourcompany.adarkroom');
-                }
-              },
-              'close': {
-                text: _('close'),
-                nextScene: 'end'
-              }
-            }
-          }
-        }
-      });
-    },
+    // ── Keyboard ──────────────────────────────────────────────
 
-    share: function() {
-      Events.startEvent({
-        title: _('Share'),
-        scenes: {
-          start: {
-            text: [_('bring your friends.')],
-            buttons: {
-              'facebook': {
-                text: _('facebook'),
-                nextScene: 'end',
-                onChoose: function() {
-                  window.open('https://www.facebook.com/sharer/sharer.php?u=' + Engine.SITE_URL, 'sharer', 'width=626,height=436,location=no,menubar=no,resizable=no,scrollbars=no,status=no,toolbar=no');
-                }
-              },
-              'google': {
-                text:_('google+'),
-                nextScene: 'end',
-                onChoose: function() {
-                  window.open('https://plus.google.com/share?url=' + Engine.SITE_URL, 'sharer', 'width=480,height=436,location=no,menubar=no,resizable=no,scrollbars=no,status=no,toolbar=no');
-                }
-              },
-              'twitter': {
-                text: _('twitter'),
-                nextScene: 'end',
-                onChoose: function() {
-                  window.open('https://twitter.com/intent/tweet?text=A%20Dark%20Room&url=' + Engine.SITE_URL, 'sharer', 'width=660,height=260,location=no,menubar=no,resizable=no,scrollbars=yes,status=no,toolbar=no');
-                }
-              },
-              'reddit': {
-                text: _('reddit'),
-                nextScene: 'end',
-                onChoose: function() {
-                  window.open('http://www.reddit.com/submit?url=' + Engine.SITE_URL, 'sharer', 'width=960,height=700,location=no,menubar=no,resizable=no,scrollbars=yes,status=no,toolbar=no');
-                }
-              },
-              'close': {
-                text: _('close'),
-                nextScene: 'end'
-              }
-            }
-          }
-        }
-      },
-      {
-        width: '400px'
-      });
-    },
+    keyLock: false,
 
-    findStylesheet: function(title) {
-      for(var i=0; i<document.styleSheets.length; i++) {
-        var sheet = document.styleSheets[i];
-        if(sheet.title == title) {
-          return sheet;
-        }
-      }
-      return null;
-    },
-
-    isLightsOff: function() {
-      var darkCss = Engine.findStylesheet('darkenLights');
-      if ( darkCss != null && !darkCss.disabled ) {
-        return true;
-      }
-      return false;
-    },
-
-    turnLightsOff: function() {
-      var darkCss = Engine.findStylesheet('darkenLights');
-      if (darkCss == null) {
-        $('head').append('<link rel="stylesheet" href="css/dark.css" type="text/css" title="darkenLights" />');
-        $('.lightsOff').text(_('lights on.'));
-        $SM.set('config.lightsOff', true, true);
-      } else if (darkCss.disabled) {
-        darkCss.disabled = false;
-        $('.lightsOff').text(_('lights on.'));
-        $SM.set('config.lightsOff', true,true);
-      } else {
-        $("#darkenLights").attr("disabled", "disabled");
-        darkCss.disabled = true;
-        $('.lightsOff').text(_('lights off.'));
-        $SM.set('config.lightsOff', false, true);
+    keyDown: function (e) {
+      if (Engine.keyLock) return;
+      // Module-specific key handling
+      if (Engine.activeModule && Engine.activeModule.keyDown) {
+        Engine.activeModule.keyDown(e);
       }
     },
 
-    confirmHyperMode: function(){
-      if (!Engine.options.doubleTime) {
-        Events.startEvent({
-          title: _('Go Hyper?'),
-          scenes: {
-            start: {
-              text: [_('turning hyper mode speeds up the game to x2 speed. do you want to do that?')],
-              buttons: {
-                'yes': {
-                  text: _('yes'),
-                  nextScene: 'end',
-                  onChoose: Engine.triggerHyperMode
-                },
-                'no': {
-                  text: _('no'),
-                  nextScene: 'end'
-                }
-              }
-            }
-          }
-        });
-      } else {
-        Engine.triggerHyperMode();
+    keyUp: function (e) {
+      if (Engine.keyLock) return;
+      if (Engine.activeModule && Engine.activeModule.keyUp) {
+        Engine.activeModule.keyUp(e);
       }
     },
 
-    triggerHyperMode: function() {
-      Engine.options.doubleTime = !Engine.options.doubleTime;
-      if(Engine.options.doubleTime)
-        $('.hyper').text(_('classic.'));
-      else
-        $('.hyper').text(_('hyper.'));
+    // ── Utilities ─────────────────────────────────────────────
 
-      $SM.set('config.hyperMode', Engine.options.doubleTime, false);
+    log: function (msg) {
+      if (Engine.options.debug) {
+        console.log('[Embers] ' + msg);
+      }
     },
 
-    // Gets a guid
-    getGuid: function() {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+    setInterval: function (fn, interval) {
+      return setInterval(fn, interval);
+    },
+
+    setTimeout: function (fn, timeout) {
+      return setTimeout(fn, timeout);
+    },
+
+    getGuid: function () {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0;
+        var v = c === 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
       });
     },
 
-    activeModule: null,
-
-    travelTo: function(module) {
-      if(Engine.activeModule == module) {
-        return;
-      }
-
-      var currentIndex = Engine.activeModule ? $('.location').index(Engine.activeModule.panel) : 1;
-      $('div.headerButton').removeClass('selected');
-      module.tab.addClass('selected');
-
-      var slider = $('#locationSlider');
-      var stores = $('#storesContainer');
-      var panelIndex = $('.location').index(module.panel);
-      var diff = Math.abs(panelIndex - currentIndex);
-      slider.animate({left: -(panelIndex * 700) + 'px'}, 300 * diff);
-
-      if($SM.get('stores.wood') !== undefined) {
-        // FIXME Why does this work if there's an animation queue...?
-        stores.animate({right: -(panelIndex * 700) + 'px'}, 300 * diff);
-      }
-
-      if(Engine.activeModule == Room || Engine.activeModule == Path || Engine.activeModule == Fabricator) {
-        // Don't fade out the weapons if we're switching to a module
-        // where we're going to keep showing them anyway.
-        if (module != Room && module != Path && module != Fabricator) {
-          $('div#weapons').animate({opacity: 0}, 300);
-        }
-      }
-
-      if(module == Room || module == Path || module == Fabricator) {
-        $('div#weapons').animate({opacity: 1}, 300);
-      }
-
-      Engine.activeModule = module;
-      module.onArrival(diff);
-      Notifications.printQueue(module);
-    },
-
-    /* Move the stores panel beneath top_container (or to top: 0px if top_container
-     * either hasn't been filled in or is null) using transition_diff to sync with
-     * the animation in Engine.travelTo().
-     */
-    moveStoresView: function(top_container, transition_diff) {
-      var stores = $('#storesContainer');
-
-      // If we don't have a storesContainer yet, leave.
-      if(typeof(stores) === 'undefined') return;
-
-      if(typeof(transition_diff) === 'undefined') transition_diff = 1;
-
-      if(top_container === null) {
-        stores.animate({top: '0px'}, {queue: false, duration: 300 * transition_diff});
-      }
-      else if(!top_container.length) {
-        stores.animate({top: '0px'}, {queue: false, duration: 300 * transition_diff});
-      }
-      else {
-        stores.animate({
-          top: top_container.height() + 26 + 'px'
-        }, {
-          queue: false,
-          duration: 300 * transition_diff
-        });
-      }
-    },
-
-    log: function(msg) {
-      if(this._log) {
-        console.log(msg);
-      }
-    },
-
-    updateSlider: function() {
-      var slider = $('#locationSlider');
-      slider.width((slider.children().length * 700) + 'px');
-    },
-
-    updateOuterSlider: function() {
-      var slider = $('#outerSlider');
-      slider.width((slider.children().length * 700) + 'px');
-    },
-
-    getIncomeMsg: function(num, delay) {
-      return _("{0} per {1}s", (num > 0 ? "+" : "") + num, delay);
-      //return (num > 0 ? "+" : "") + num + " per " + delay + "s";
-    },
-
-    keyLock: false,
-    tabNavigation: true,
-    restoreNavigation: false,
-
-    keyDown: function(e) {
-      e = e || window.event;
-      if(!Engine.keyPressed && !Engine.keyLock) {
-        Engine.pressed = true;
-        if(Engine.activeModule.keyDown) {
-          Engine.activeModule.keyDown(e);
-        }
-      }
-      return jQuery.inArray(e.keycode, [37,38,39,40]) < 0;
-    },
-
-    keyUp: function(e) {
-      Engine.pressed = false;
-      if(Engine.activeModule.keyUp) {
-        Engine.activeModule.keyUp(e);
-      } else {
-        switch(e.which) {
-          case 38: // Up
-          case 87:
-            Engine.log('up');
-            break;
-          case 40: // Down
-          case 83:
-            Engine.log('down');
-            break;
-          case 37: // Left
-          case 65:
-            if (Engine.tabNavigation) {
-              if (Engine.activeModule == Ship && Fabricator.tab) {
-                Engine.travelTo(Fabricator);
-              }
-              else if ((Engine.activeModule == Ship || Engine.activeModule == Fabricator) && Path.tab) {
-                Engine.travelTo(Path);
-              }
-              else if (Engine.activeModule == Path && Outside.tab) {
-                Engine.travelTo(Outside);
-              } 
-              else if (Engine.activeModule == Outside && Room.tab) {
-                Engine.travelTo(Room);
-              }
-            }
-            Engine.log('left');
-            break;
-          case 39: // Right
-          case 68:
-            if (Engine.tabNavigation){
-              if (Engine.activeModule == Room && Outside.tab) {
-                Engine.travelTo(Outside);
-              }
-              else if (Engine.activeModule == Outside && Path.tab){
-                Engine.travelTo(Path);
-              }
-              else if(Engine.activeModule == Path && Fabricator.tab) {
-                Engine.travelTo(Fabricator);
-              }
-              else if ((Engine.activeModule == Path || Engine.activeModule == Fabricator) && Ship.tab){
-                Engine.travelTo(Ship);
-              }
-            }
-            Engine.log('right');
-            break;
-        }
-      }
-      if(Engine.restoreNavigation){
-        Engine.tabNavigation = true;
-        Engine.restoreNavigation = false;
-      }
-      return false;
-    },
-
-    swipeLeft: function(e) {
-      if(Engine.activeModule.swipeLeft) {
-        Engine.activeModule.swipeLeft(e);
-      }
-    },
-
-    swipeRight: function(e) {
-      if(Engine.activeModule.swipeRight) {
-        Engine.activeModule.swipeRight(e);
-      }
-    },
-
-    swipeUp: function(e) {
-      if(Engine.activeModule.swipeUp) {
-        Engine.activeModule.swipeUp(e);
-      }
-    },
-
-    swipeDown: function(e) {
-      if(Engine.activeModule.swipeDown) {
-        Engine.activeModule.swipeDown(e);
-      }
-    },
-
-    disableSelection: function() {
-      document.onselectstart = eventNullifier; // this is for IE
-      document.onmousedown = eventNullifier; // this is for the rest
-    },
-
-    enableSelection: function() {
-      document.onselectstart = eventPassthrough;
-      document.onmousedown = eventPassthrough;
-    },
-
-    autoSelect: function(selector) {
-      $(selector).focus().select();
-    },
-
-    handleStateUpdates: function(e){
-
-    },
-
-    switchLanguage: function(dom){
-      var lang = $(dom).data("language");
-      if(document.location.href.search(/[\?\&]lang=[a-z_]+/) != -1){
-        document.location.href = document.location.href.replace( /([\?\&]lang=)([a-z_]+)/gi , "$1"+lang );
-      }else{
-        document.location.href = document.location.href + ( (document.location.href.search(/\?/) != -1 )?"&":"?") + "lang="+lang;
-      }
-    },
-
-    saveLanguage: function(){
-      var lang = decodeURIComponent((new RegExp('[?|&]lang=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||null;
-      if(lang && typeof Storage != 'undefined' && localStorage) {
-        localStorage.lang = lang;
-      }
-    },
-
-    toggleVolume: function(enabled /* optional */) {
-      if (enabled == null) {
-        enabled = !$SM.get('config.soundOn');
-      }
-      if (!enabled) {
-        $('.volume').text(_('sound on.'));
-        $SM.set('config.soundOn', false);
-        AudioEngine.setMasterVolume(0.0);
-      } else {
-        $('.volume').text(_('sound off.'));
-        $SM.set('config.soundOn', true);
-        AudioEngine.setMasterVolume(1.0);
-      }
-    },
-
-    setInterval: function(callback, interval, skipDouble){
-      if( Engine.options.doubleTime && !skipDouble ){
-        Engine.log('Double time, cutting interval in half');
-        interval /= 2;
-      }
-
-      return setInterval(callback, interval);
-
-    },
-
-    setTimeout: function(callback, timeout, skipDouble){
-
-      if( Engine.options.doubleTime && !skipDouble ){
-        Engine.log('Double time, cutting timeout in half');
-        timeout /= 2;
-      }
-
-      return setTimeout(callback, timeout);
-
+    handleStateUpdates: function (e) {
+      // Check for phase unlock on any state change
+      Engine.checkPhaseUnlock();
     }
   };
 
-  function eventNullifier(e) {
-    return $(e.target).hasClass('menuBtn');
-  }
-
-  function eventPassthrough(e) {
-    return true;
-  }
-
-  function notifyAboutSound() {
-    if ($SM.get('playStats.audioAlertShown')) {
-      return;
-    }
-
-    // Tell new users that there's sound now!
-    $SM.set('playStats.audioAlertShown', true);
-    Events.startEvent({
-      title: _('Sound Available!'),
-      scenes: {
-        start: {
-          text: [
-            _('ears flooded with new sensations.'),
-            _('perhaps silence is safer?')
-          ],
-          buttons: {
-            'yes': {
-              text: _('enable audio'),
-              nextScene: 'end',
-              onChoose: () => Engine.toggleVolume(true)
-            },
-            'no': {
-              text: _('disable audio'),
-              nextScene: 'end',
-              onChoose: () => Engine.toggleVolume(false)
-            }
-          }
-        }
-      }
-    });
-  }
-
 })();
-
-function inView(dir, elem){
-
-  var scTop = $('#main').offset().top;
-  var scBot = scTop + $('#main').height();
-
-  var elTop = elem.offset().top;
-  var elBot = elTop + elem.height();
-
-  if( dir == 'up' ){
-    // STOP MOVING IF BOTTOM OF ELEMENT IS VISIBLE IN SCREEN
-    return ( elBot < scBot );
-  } else if( dir == 'down' ){
-    return ( elTop > scTop );
-  } else {
-    return ( ( elBot <= scBot ) && ( elTop >= scTop ) );
-  }
-
-}
-
-function setYPosition(elem, y) {
-  var elTop = parseInt( elem.css('top'), 10 );
-  elem.css('top', `${y}px`);
-}
-
-
-//create jQuery Callbacks() to handle object events
-$.Dispatch = function( id ) {
-  var callbacks, topic = id && Engine.topics[ id ];
-  if ( !topic ) {
-    callbacks = jQuery.Callbacks();
-    topic = {
-      publish: callbacks.fire,
-      subscribe: callbacks.add,
-      unsubscribe: callbacks.remove
-    };
-    if ( id ) {
-      Engine.topics[ id ] = topic;
-    }
-  }
-  return topic;
-};
-
-$(function() {
-  Engine.init();
-});

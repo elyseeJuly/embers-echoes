@@ -1,131 +1,102 @@
+/**
+ * 余烬回响 — Button System
+ * =========================
+ * Reusable button with cooldown, cost display, and disable state.
+ */
 var Button = {
-	Button: function(options) {
-		if(typeof options.cooldown == 'number') {
-			this.data_cooldown = options.cooldown;
+
+	Button: function (options) {
+		var $btn = $('<div>')
+			.attr('id', options.id || '')
+			.addClass('ee-btn')
+			.text(options.text || '')
+			.css('width', options.width || 'auto');
+
+		if (options.cooldown) {
+			$btn.data('cooldown', options.cooldown);
 		}
-		this.data_remaining = 0;
-		if(typeof options.click == 'function') {
-			this.data_handler = options.click;
-		}
-
-		var el = $('<div>')
-			.attr('id', typeof(options.id) != 'undefined' ? options.id : "BTN_" + Engine.getGuid())
-			.addClass('button')
-			.text(typeof(options.text) != 'undefined' ? options.text : "button")
-			.click(function() {
-				if(!$(this).hasClass('disabled')) {
-					Button.cooldown($(this));
-					$(this).data("handler")($(this));
-				}
-			})
-			.data("handler",  typeof options.click == 'function' ? options.click : function() { Engine.log("click"); })
-			.data("remaining", 0)
-			.data("cooldown", typeof options.cooldown == 'number' ? options.cooldown : 0)
-			.data('boosted', options.boosted ?? (() => false));
-
-		el.append($("<div>").addClass('cooldown'));
-
-		// waiting for expiry of residual cooldown detected in state
-		Button.cooldown(el, 'state');
-
-		if(options.cost) {
-			var ttPos = options.ttPos ? options.ttPos : "bottom right";
-			var costTooltip = $('<div>').addClass('tooltip ' + ttPos);
-			for(var k in options.cost) {
-				$("<div>").addClass('row_key').text(_(k)).appendTo(costTooltip);
-				$("<div>").addClass('row_val').text(options.cost[k]).appendTo(costTooltip);
-			}
-			if(costTooltip.children().length > 0) {
-				costTooltip.appendTo(el);
-			}
+		if (options.cost) {
+			$btn.data('cost', options.cost);
 		}
 
-		if(options.width) {
-			el.css('width', options.width);
-		}
+		// Click handler with cooldown
+		$btn.on('click', function () {
+			if (Button.isDisabled($btn) || $btn.data('onCooldown')) return;
 
-		return el;
-	},
-
-	saveCooldown: true,
-
-	setDisabled: function(btn, disabled) {
-		if(btn) {
-			if(!disabled && !btn.data('onCooldown')) {
-				btn.removeClass('disabled');
-			} else if(disabled) {
-				btn.addClass('disabled');
-			}
-			btn.data('disabled', disabled);
-		}
-	},
-
-	isDisabled: function(btn) {
-		if(btn) {
-			return btn.data('disabled') === true;
-		}
-		return false;
-	},
-
-	cooldown: function(btn, option) {
-		var cd = btn.data("cooldown");
-		if (btn.data('boosted')()) {
-			cd /= 2;
-		}
-		var id = 'cooldown.'+ btn.attr('id');
-		if(cd > 0) {
-			if(typeof option == 'number') {
-				cd = option;
-			}
-			// param "start" takes value from cooldown time if not specified
-			var start, left;
-			switch(option){
-				// a switch will allow for several uses of cooldown function
-				case 'state':
-					if(!$SM.get(id)){
+			// Check cost
+			var cost = $btn.data('cost');
+			if (cost) {
+				for (var resource in cost) {
+					var available = $SM.get('stores.' + resource) || 0;
+					if (available < cost[resource]) {
+						// Can't afford
+						$btn.addClass('combat-shake');
+						setTimeout(function () { $btn.removeClass('combat-shake'); }, 200);
 						return;
 					}
-					start = Math.min($SM.get(id), cd);
-					left = (start / cd).toFixed(4);
-					break;
-				default:
-					start = cd;
-					left = 1;
+				}
+				// Deduct cost
+				for (var resource in cost) {
+					$SM.add('stores.' + resource, -cost[resource]);
+				}
 			}
-			Button.clearCooldown(btn);
-			if(Button.saveCooldown){
-				$SM.set(id,start);
-				// residual value is measured in seconds
-				// saves program performance
-				btn.data('countdown', Engine.setInterval(function(){
-					$SM.set(id, $SM.get(id, true) - 0.5, true);
-				},500));
+
+			// Fire click handler
+			if (options.click) {
+				options.click($btn);
 			}
-			var time = start;
-			if (Engine.options.doubleTime){
-				time /= 2;
+
+			// Start cooldown
+			if (options.cooldown) {
+				Button.cooldown($btn, options.cooldown);
 			}
-			$('div.cooldown', btn).width(left * 100 +"%").animate({width: '0%'}, time * 1000, 'linear', function() {
-				Button.clearCooldown(btn, true);
-			});
-			btn.addClass('disabled');
-			btn.data('onCooldown', true);
+		});
+
+		return $btn;
+	},
+
+	/**
+	 * Start cooldown on a button
+	 */
+	cooldown: function ($btn, duration) {
+		if (!duration) duration = $btn.data('cooldown') || 0;
+		if (duration <= 0) return;
+
+		$btn.data('onCooldown', true);
+
+		// Remove existing cooldown bar
+		$btn.find('.cooldown-bar').remove();
+
+		var $bar = $('<div>').addClass('cooldown-bar').css('width', '100%');
+		$btn.append($bar);
+
+		// Animate the bar shrinking
+		$bar.animate({ width: '0%' }, duration * 1000, 'linear', function () {
+			$btn.data('onCooldown', false);
+			$(this).remove();
+		});
+	},
+
+	/**
+	 * Clear cooldown
+	 */
+	clearCooldown: function ($btn) {
+		$btn.data('onCooldown', false);
+		$btn.find('.cooldown-bar').stop(true, true).remove();
+	},
+
+	/**
+	 * Set button disabled state
+	 */
+	setDisabled: function ($btn, disabled) {
+		if (disabled) {
+			$btn.addClass('disabled');
+		} else {
+			$btn.removeClass('disabled');
 		}
 	},
 
-	clearCooldown: function(btn, cooldownEnded) {
-		var ended = cooldownEnded || false;
-		if(!ended){
-			$('div.cooldown', btn).stop(true, true);
-		}
-		btn.data('onCooldown', false);
-		if(btn.data('countdown')){
-			window.clearInterval(btn.data('countdown'));
-			$SM.remove('cooldown.'+ btn.attr('id'));
-			btn.removeData('countdown');
-		}
-		if(!btn.data('disabled')) {
-			btn.removeClass('disabled');
-		}
+	isDisabled: function ($btn) {
+		return $btn.hasClass('disabled');
 	}
 };
