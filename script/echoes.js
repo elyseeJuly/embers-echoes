@@ -73,10 +73,6 @@ var Echoes = {
         }
     },
 
-    getEchoes: function () {
-        return $SM.get('game.echoes') || 0;
-    },
-
     addEchoes: function (amount) {
         $SM.add('game.echoes', amount);
         Echoes.saveMeta();

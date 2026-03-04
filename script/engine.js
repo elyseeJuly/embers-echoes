@@ -111,11 +111,11 @@
         Engine.saveGame();
       }, Engine.SAVE_INTERVAL);
 
-      // Check for offline gains BEFORE starting tick to avoid race
-      Engine.processOfflineTime();
-
       // Start the global tick
       Engine.startTick();
+
+      // Check for offline gains
+      Engine.processOfflineTime();
 
       // Apply current phase visuals
       Engine.applyPhaseVisuals();
@@ -210,12 +210,11 @@
      */
     checkPhaseUnlock: function () {
       var phase = Engine.getPhase();
-      var ember, gray;
 
       // NULL → SPARK: always available (button click)
       // SPARK → CAMP: ember >= 50
       if (phase === Engine.PHASES.SPARK) {
-        ember = $SM.get('stores.ember') || 0;
+        var ember = $SM.get('stores.ember') || 0;
         if (ember >= 50) {
           Engine.setPhase(Engine.PHASES.CAMP);
           Notifications.notify('结构节点已激活。迷失者开始聚集。');
@@ -223,8 +222,8 @@
       }
       // CAMP → ABYSS: ember >= 200 or gray matter >= 50
       else if (phase === Engine.PHASES.CAMP) {
-        ember = $SM.get('stores.ember') || 0;
-        gray = $SM.get('stores.grayMatter') || 0;
+        var ember = $SM.get('stores.ember') || 0;
+        var gray = $SM.get('stores.grayMatter') || 0;
         if (ember >= 200 || gray >= 50) {
           Engine.setPhase(Engine.PHASES.ABYSS);
           Notifications.notify('深渊在低语。理智开始动摇。');
@@ -507,73 +506,6 @@
     handleStateUpdates: function (e) {
       // Check for phase unlock on any state change
       Engine.checkPhaseUnlock();
-    },
-
-    /**
-     * Trigger a death sequence (game over + narrative + meta-progression)
-     * @param {Object} deathData - from Narrative.dict.deathEchoes
-     * @param {string} endingId  - unique ending identifier
-     * @param {string} endingTitle
-     * @param {string} endingDesc
-     */
-    triggerDeathSequence: function (deathData, endingId, endingTitle, endingDesc) {
-      if (Engine.GAME_OVER) return;
-      Engine.GAME_OVER = true;
-      Engine.stopTick();
-
-      // Record ending for gallery
-      if (typeof Gallery !== 'undefined') {
-        Gallery.recordEnding(endingId, endingTitle, endingDesc);
-      }
-
-      // Grant echoes for dying
-      if (typeof Echoes !== 'undefined') {
-        Echoes.addEchoes(1);
-      }
-
-      // Show death overlay
-      var title = deathData ? deathData.title : endingTitle;
-      var text  = deathData ? deathData.text  : endingDesc;
-
-      var $overlay = $('<div>').attr('id', 'death-overlay').css({
-        position: 'fixed',
-        top: 0, left: 0, right: 0, bottom: 0,
-        background: 'rgba(5, 5, 10, 0.97)',
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        opacity: 0
-      });
-
-      var $panel = $('<div>').css({
-        maxWidth: '500px',
-        width: '90%',
-        padding: '32px',
-        border: '1px solid var(--blood-red)',
-        background: 'var(--surface-2)'
-      });
-
-      $('<div>').css({ color: 'var(--blood-red)', fontFamily: 'var(--font-terminal)',
-        fontSize: '1rem', letterSpacing: '2px', marginBottom: '16px'
-      }).text(title || '游戏结束').appendTo($panel);
-
-      $('<div>').css({ color: 'var(--ash-light)', fontFamily: 'var(--font-terminal)',
-        fontSize: '0.8rem', lineHeight: '1.8', marginBottom: '24px', whiteSpace: 'pre-line'
-      }).text(text || '').appendTo($panel);
-
-      $('<button>').css({
-        background: 'transparent', border: '1px solid var(--ash-gray)',
-        color: 'var(--ash-light)', fontFamily: 'var(--font-terminal)',
-        padding: '8px 24px', cursor: 'pointer'
-      }).text('【重新轮回】').on('click', function () {
-        Engine.deleteSave();
-      }).appendTo($panel);
-
-      $overlay.append($panel).appendTo('body');
-      setTimeout(function () {
-        $overlay.css({ opacity: 1, transition: 'opacity 0.8s' });
-      }, 10);
     }
   };
 

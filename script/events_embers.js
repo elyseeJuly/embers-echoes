@@ -151,15 +151,10 @@ var Events = {
     ],
 
     init: function () {
-        // Only start scheduling once game reaches CAMP phase
-        if (Engine.getPhase() >= Engine.PHASES.CAMP) {
-            Events.scheduleNextEvent();
-        }
+        Events.scheduleNextEvent();
 
-        $.Dispatch('phaseChange').subscribe(function (e) {
-            if (e.to === Engine.PHASES.CAMP && !Events._eventTimer) {
-                Events.scheduleNextEvent();
-            }
+        $.Dispatch('phaseChange').subscribe(function () {
+            // Reschedule events when phase changes
         });
     },
 
@@ -185,20 +180,17 @@ var Events = {
         // Filter eligible events based on string conditions
         var eligible = pool.filter(function (evt) {
             var conditionMet = true;
-            var condition = evt.condition || '';
-            var emberThreshold, erosionThreshold, whispersThreshold;
-
-            if (condition.indexOf('ember') !== -1) {
-                emberThreshold = parseInt(condition.split('>')[1]);
-                if (!isNaN(emberThreshold) && ($SM.get('stores.ember') || 0) <= emberThreshold) conditionMet = false;
+            if (evt.condition.indexOf('ember') !== -1) {
+                var val = parseInt(evt.condition.split('>')[1]);
+                if (($SM.get('stores.ember') || 0) <= val) conditionMet = false;
             }
-            if (condition.indexOf('erosion') !== -1) {
-                erosionThreshold = parseInt(condition.split('>')[1]);
-                if (!isNaN(erosionThreshold) && ($SM.get('character.erosion') || 0) <= erosionThreshold) conditionMet = false;
+            if (evt.condition.indexOf('erosion') !== -1) {
+                var val = parseInt(evt.condition.split('>')[1]);
+                if (($SM.get('game.erosion') || 0) <= val) conditionMet = false;
             }
-            if (condition.indexOf('whispers') !== -1) {
-                whispersThreshold = parseInt(condition.split('>')[1]);
-                if (!isNaN(whispersThreshold) && ($SM.get('stores.whispers') || 0) <= whispersThreshold) conditionMet = false;
+            if (evt.condition.indexOf('whispers') !== -1) {
+                var val = parseInt(evt.condition.split('>')[1]);
+                if (($SM.get('stores.whispers') || 0) <= val) conditionMet = false;
             }
             return conditionMet;
         });

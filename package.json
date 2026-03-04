@@ -1,9 +1,9 @@
 {
-  "name": "adarkroom",
+  "name": "embers-echoes",
   "type": "module",
   "version": "1.0.0",
   "private": true,
-  "repository": "git@github.com:doublespeakgames/adarkroom.git",
+  "repository": "git@github.com:elyseeJuly/embers-echoes.git",
   "author": "Michael Townsend <michael@doublespeakgames.com>",
   "license": "MPL-2.0",
   "scripts": {

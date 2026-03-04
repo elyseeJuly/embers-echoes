@@ -7,7 +7,7 @@
 var Population = {
 
     name: '人口',
-    tabId: 'tab-population',
+    tabId: 'tab-nexus',
 
     // Worker type definitions
     _WORKERS: {
@@ -110,14 +110,13 @@ var Population = {
 
     getMaxPopulation: function () {
         var towers = $SM.get('buildings.signalTower') || 0;
-        return 2 + towers * 5; // base 2 so arrivals can happen before first tower
+        return towers * 5;
     },
 
     getCurrentPopulation: function () {
         var workers = $SM.get('workers') || {};
         var total = 0;
         for (var key in workers) {
-            if (key === 'wanderer') continue; // wanderers are the idle pool, not assigned
             total += workers[key] || 0;
         }
         return total;
@@ -215,10 +214,9 @@ var Population = {
 
         // Update summary
         var $summary = $('#worker-panel .worker-summary');
-        var totalPop = currentPop + wanderers; // assigned + idle
         $summary.html(
             '<span class="pop-label">人口: </span>' +
-            '<span class="pop-count">' + totalPop + '/' + maxPop + '</span>' +
+            '<span class="pop-count">' + currentPop + '/' + maxPop + '</span>' +
             '<span class="pop-label" style="margin-left:12px">游荡者: </span>' +
             '<span class="pop-count">' + wanderers + '</span>'
         );

@@ -275,9 +275,10 @@ var StateManager = {
 			for (var resource in inc.stores) {
 				var amount = inc.stores[resource] * count;
 
-				// Apply perks
+				// Apply buffs
 				if (amount > 0 && resource === 'ember') {
-					if (this.hasPerk('ember_reflux')) {
+					var buffs = this.get('character.buffs') || {};
+					if (buffs['ember_reflux']) {
 						amount *= 1.15;
 					}
 				}
