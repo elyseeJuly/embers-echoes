@@ -4,7 +4,7 @@
 
 《余烬回响》(Embers Echoes) 是一款基于增量/放置机制的纯前端生存游戏。它在极简的文字与 UI 界面下，隐藏着深度的资源管理、基地建设、大地图探索以及严酷的 Rouge-lite 死亡轮回系统。
 
-你可以直接在这里体验游戏：**[▶ 立即试玩 Embers Echoes (GitHub Pages)](#)** 
+你可以直接在这里体验游戏：**[▶ 立即试玩[ Embers Echoes (https://elyseejuly.github.io/embers-echoes/)](#)]** 
 *(请将链接替换为你部署后的实际网页地址)*
 
 ---
