@@ -257,18 +257,24 @@ Combat.Dungeon = {
         Combat.Dungeon.active = true;
         Combat.Dungeon.wave = 0;
 
-        // Smart Loot: Filter out fragments the player already has or has crafted
-        var candidates = ['frag_turing', 'frag_klein', 'frag_watch'];
-        var missing = candidates.filter(function (id) {
-            var relicId = id.replace('frag_', 'relic_'); // Assumes matching naming scheme
-            return !$SM.hasFragment(id) && !$SM.hasRelic(relicId);
+        // Smart Loot: full high-tier fragment pool
+        var HIGH_TIER_FRAGS = ['frag_turing', 'frag_klein', 'frag_biotech', 'frag_scroll', 'frag_watch', 'frag_recorder'];
+        var missing = HIGH_TIER_FRAGS.filter(function (id) {
+            // Exclude if player already has the fragment OR has crafted the relic from it
+            var recipe = Narrative.dict.craftingRecipes && Narrative.dict.craftingRecipes.find(function (r) {
+                return r.fragments && r.fragments.indexOf(id) !== -1;
+            });
+            var relicCrafted = recipe ? $SM.hasRelic(recipe.relicId) : false;
+            return !$SM.hasFragment(id) && !relicCrafted;
         });
 
-        // If missing any, pick one randomly. Otherwise return null (gives anomalies at end)
+        // Guarantee a new fragment if possible; otherwise random from full pool + bonus
         if (missing.length > 0) {
             Combat.Dungeon.fragmentId = missing[Math.floor(Math.random() * missing.length)];
         } else {
-            Combat.Dungeon.fragmentId = null;
+            // Full collection — random from pool, but also grant bonus resources at end
+            Combat.Dungeon.fragmentId = HIGH_TIER_FRAGS[Math.floor(Math.random() * HIGH_TIER_FRAGS.length)];
+            Combat.Dungeon.bonusLoot = true;
         }
 
         Notifications.notify('[深渊遗迹] 进入副本。前方有 ' + Combat.Dungeon.maxWaves + ' 波守卫和一名最终守门人。');
@@ -307,6 +313,8 @@ Combat.Dungeon = {
     complete: function () {
         Combat.Dungeon.active = false;
         var fragId = Combat.Dungeon.fragmentId;
+        var isBonus = Combat.Dungeon.bonusLoot;
+        Combat.Dungeon.bonusLoot = false; // reset
         var fragDef = Narrative.dict.fragments && Narrative.dict.fragments[fragId];
 
         if (fragDef) {
@@ -316,8 +324,15 @@ Combat.Dungeon = {
             // Auto-consume supplies to simulate weight burden
             $SM.add('stores.concentrate', -Math.ceil(($SM.get('stores.concentrate') || 0) * 0.5));
         } else {
-            $SM.add('stores.anomalies', 50);
-            Notifications.notify('[副本完成] 守门人留下了大量异常样本。+50 异常样本。');
+            $SM.add('stores.anomalies', 100);
+            Notifications.notify('[副本完成] 守门人留下了大量异常样本。+100 异常样本。');
+        }
+
+        // Bonus compensation when full collection
+        if (isBonus) {
+            $SM.add('stores.anomalies', 100);
+            $SM.add('stores.whispers', 10);
+            Notifications.notify('[副本完成] 你已持有所有已知碎片。守门人的意识残骸转化为额外的观测数据。+100 异常样本  +10 低语值。');
         }
 
         Combat.endEncounter(true);

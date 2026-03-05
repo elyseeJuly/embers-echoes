@@ -10,14 +10,13 @@ var StateManager = {
 
 	options: {},
 
-	// Storage caps for each resource (base values, modified by buildings)
 	_storageCaps: {
-		'ember': 100,    // base cap, increased by Ember Furnace
-		'grayMatter': 50,     // base cap, increased by Gray Synthesizer
-		'whispers': 30,     // base 30; riftBeacon adds +20
-		'concentrate': 10,     // base cap, increased by upgrades
-		'relics': 10,     // base cap
-		'anomalies': 200  // base cap, consumed by crafting
+		'ember': 100,    // base cap, increased by Ember Furnace (+50 each)
+		'grayMatter': 50,     // base cap, increased by Gray Synthesizer (+30 each)
+		'whispers': 20,     // base 20; +10 per dataVault (3× = 50 max)
+		'concentrate': 10,
+		'relics': 10,     // +10 per dataVault
+		'anomalies': 200  // +50 per dataVault
 	},
 
 	// Income sources (set by Population module)
@@ -136,6 +135,12 @@ var StateManager = {
 
 			// Never go below 0
 			if (newVal < 0) newVal = 0;
+			// Whispers-at-cap notification (once per cap-hit, not every tick)
+			if (resourceKey === 'whispers' && newVal >= cap && (current || 0) < cap) {
+				if (typeof Notifications !== 'undefined') {
+					Notifications.notify('低语值容量已满。高维噪音在溢出——建造更多数据金库以容纳更多。');
+				}
+			}
 			// Never exceed cap
 			if (newVal > cap) newVal = cap;
 		}
@@ -208,13 +213,15 @@ var StateManager = {
 		else if (resourceKey === 'grayMatter') {
 			bonus += (buildings['graySynthesizer'] || 0) * 30;
 		}
-		// Data Vault: +10 relics cap each
+		// Data Vault: +10 relics cap, +10 whispers cap, +50 anomalies cap each
 		else if (resourceKey === 'relics') {
 			bonus += (buildings['dataVault'] || 0) * 10;
 		}
-		// Rift Beacon: +20 whispers cap (once)
 		else if (resourceKey === 'whispers') {
-			bonus += Math.min(buildings['riftBeacon'] || 0, 1) * 20;
+			bonus += (buildings['dataVault'] || 0) * 10;
+		}
+		else if (resourceKey === 'anomalies') {
+			bonus += (buildings['dataVault'] || 0) * 50;
 		}
 
 		return base + bonus;
