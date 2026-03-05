@@ -20,6 +20,8 @@ var Combat = {
         { name: '维度裂口看门人', hp: 50, dmg: 8, speed: 8 },
     ],
 
+    BOSS_ENEMY: { name: '陨落文明守门人', hp: 120, dmg: 15, speed: 6, isBoss: true },
+
     WEAPONS: {
         'EMP Blast': { name: '电磁脉冲 (EMP)', dmg: 3, speed: 25 },
         'Data Blade': { name: '数据刃', dmg: 8, speed: 15, perkScale: 'data_blade_mastery' },
@@ -182,25 +184,34 @@ var Combat = {
 
     checkVictory: function () {
         if (Combat.enemyHp <= 0) {
-            // Base ember reward
             var emberVal = 50 + Math.floor(Math.random() * 50);
             Survival.addLoot('ember', emberVal);
-            Notifications.notify('实体已溃散。发现了 ' + emberVal + ' 余烬。');
 
-            // Relic drop: strong enemy (base HP >= 50) 33% chance for special relic
-            //             weak/medium enemy 15% chance for common relic
-            if (typeof Narrative !== 'undefined' && Narrative.dict && Narrative.dict.relics &&
+            // Dungeon wave handling
+            if (Combat.Dungeon.active) {
+                Combat.Dungeon.onWaveVictory();
+                return;
+            }
+
+            // Random encounter: fragment drop (replaces direct relic drop)
+            if (typeof Narrative !== 'undefined' && Narrative.dict && Narrative.dict.fragments &&
                 typeof RiftMap !== 'undefined') {
                 var isStrong = Combat.enemyMaxHp >= 50;
                 var dropChance = isStrong ? 0.33 : 0.15;
                 if (Math.random() < dropChance) {
-                    var relicType = isStrong ? 'special' : 'common';
-                    var relic = RiftMap.pickRandomRelic(relicType);
-                    $SM.addRelic(relic.id);
-                    Notifications.notify('实体溃散时留下了一段文明残影——【' + relic.name + '】');
+                    // Strong enemies drop rarer fragments
+                    var allowedIds = isStrong
+                        ? ['frag_klein', 'frag_watch', 'frag_turing']
+                        : ['frag_biotech', 'frag_scroll', 'frag_recorder'];
+                    var frag = RiftMap.pickRandomFragment(allowedIds);
+                    if (frag) {
+                        $SM.addFragment(frag.id);
+                        Notifications.notify('实体溃散时留下了加密残片——【' + frag.name + '】(重 ' + frag.weight + 'kg)');
+                    }
                 }
             }
 
+            Notifications.notify('实体已溃散。发现了 ' + emberVal + ' 余烬。');
             Combat.endEncounter(true);
         }
     },
@@ -208,9 +219,7 @@ var Combat = {
     endEncounter: function (victory) {
         Combat.active = false;
         clearInterval(Combat.tickTimer);
-
         $('#combat-panel').hide();
-
         if (victory) {
             $('#map-panel').show();
             RiftMap.drawMap();
@@ -218,16 +227,93 @@ var Combat = {
     },
 
     updateView: function () {
-        // HP Bars
         var hp = $SM.get('character.hp') || 0;
         var maxHp = $SM.get('character.maxHp') || 10;
         $('#combat-hp').text(Math.max(0, hp).toFixed(0) + ' / ' + maxHp);
         $('#enemy-name').text(Combat.enemyName);
         $('#enemy-hp').text(Math.max(0, Combat.enemyHp).toFixed(0) + ' / ' + Combat.enemyMaxHp);
-
-        // ATB Bars
         $('#combat-atb .atb-fill').css('width', Math.min(100, (Combat.playerAtb / Combat.ATB_MAX) * 100) + '%');
         $('#enemy-atb .atb-fill').css('width', Math.min(100, (Combat.enemyAtb / Combat.ATB_MAX) * 100) + '%');
     }
 
+};
+
+// ── Dungeon Crawl Sub-system ─────────────────────────────────
+Combat.Dungeon = {
+    active: false,
+    wave: 0,
+    maxWaves: 3,
+    fragmentId: null, // guaranteed fragment on completion
+
+    // Map tile types to their guaranteed fragment drops
+    DUNGEON_LOOT: {
+        'turing': 'frag_turing',
+        'klein': 'frag_klein',
+        'default': 'frag_watch'
+    },
+
+    start: function (dungeonType) {
+        if (Combat.active) return;
+        Combat.Dungeon.active = true;
+        Combat.Dungeon.wave = 0;
+        Combat.Dungeon.fragmentId = Combat.Dungeon.DUNGEON_LOOT[dungeonType || 'default'];
+
+        Notifications.notify('[深渊遗迹] 进入副本。前方有 ' + Combat.Dungeon.maxWaves + ' 波守卫和一名最终守门人。');
+        Notifications.notify('[深渊遗迹] 警告：副本内无法存档。死亡将清空本次探索收益。');
+        Combat.Dungeon.nextWave();
+    },
+
+    nextWave: function () {
+        Combat.Dungeon.wave++;
+        var isBoss = Combat.Dungeon.wave > Combat.Dungeon.maxWaves;
+
+        if (isBoss) {
+            var boss = Combat.BOSS_ENEMY;
+            Notifications.notify('[波次 Boss] ' + boss.name + ' — 最终守门人出现。');
+            Combat.startEncounter(boss);
+        } else {
+            var enemies = Combat.ENEMIES;
+            var enemy = enemies[Math.min(Combat.Dungeon.wave - 1, enemies.length - 1)];
+            Notifications.notify('[波次 ' + Combat.Dungeon.wave + '/' + Combat.Dungeon.maxWaves + '] ' + enemy.name + ' 出现。');
+            Combat.startEncounter(enemy);
+        }
+    },
+
+    onWaveVictory: function () {
+        var isBoss = Combat.Dungeon.wave > Combat.Dungeon.maxWaves;
+        if (isBoss) {
+            Combat.Dungeon.complete();
+        } else {
+            var emberVal = 30 + Math.floor(Math.random() * 30);
+            Survival.addLoot('ember', emberVal);
+            Notifications.notify('[深渊遗迹] 波次 ' + Combat.Dungeon.wave + ' 清除。+' + emberVal + ' 余烬。');
+            setTimeout(function () { Combat.Dungeon.nextWave(); }, 1500);
+        }
+    },
+
+    complete: function () {
+        Combat.Dungeon.active = false;
+        var fragId = Combat.Dungeon.fragmentId;
+        var fragDef = Narrative.dict.fragments && Narrative.dict.fragments[fragId];
+
+        if (fragDef) {
+            $SM.addFragment(fragId);
+            Notifications.notify('[副本完成] 守门人在临死前吐出了核心遗物——【' + fragDef.name + '】(重 ' + fragDef.weight + 'kg)。');
+            Notifications.notify('[副本完成] 这件物品极其沉重，你必须丢弃部分补给才能带走它。');
+            // Auto-consume supplies to simulate weight burden
+            $SM.add('stores.concentrate', -Math.ceil(($SM.get('stores.concentrate') || 0) * 0.5));
+        } else {
+            $SM.add('stores.anomalies', 50);
+            Notifications.notify('[副本完成] 守门人留下了大量异常样本。+50 异常样本。');
+        }
+
+        Combat.endEncounter(true);
+    },
+
+    onPlayerDeath: function () {
+        // Called from Combat when player dies during a dungeon
+        Combat.Dungeon.active = false;
+        Combat.Dungeon.wave = 0;
+        Notifications.notify('[副本失败] 意识碎裂。没有带出任何东西。');
+    }
 };

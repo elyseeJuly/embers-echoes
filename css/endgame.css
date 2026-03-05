@@ -306,9 +306,21 @@ body.matrix-flash {
     letter-spacing: 0.5px;
 }
 
-.relic-type-common { color: var(--ash-gray); border-color: var(--ash-gray); }
-.relic-type-special { color: var(--glow-cyan); border-color: var(--glow-cyan); }
-.relic-type-anchor  { color: var(--ember-orange); border-color: var(--ember-orange); text-shadow: 0 0 6px var(--ember-orange); }
+.relic-type-common {
+    color: var(--ash-gray);
+    border-color: var(--ash-gray);
+}
+
+.relic-type-special {
+    color: var(--glow-cyan);
+    border-color: var(--glow-cyan);
+}
+
+.relic-type-anchor {
+    color: var(--ember-orange);
+    border-color: var(--ember-orange);
+    text-shadow: 0 0 6px var(--ember-orange);
+}
 
 /* ── Map Event Overlay ─────────────────────────────────────── */
 
@@ -397,4 +409,153 @@ body.matrix-flash {
     font-size: 0.8rem;
     font-style: italic;
     opacity: 0.6;
+}
+
+/* ── Fragment Rows ─────────────────────────────────────────── */
+
+.fragment-row {
+    border-color: var(--glow-purple);
+    background: rgba(100, 0, 180, 0.05);
+}
+
+.fragment-weight {
+    font-size: 0.7rem;
+    color: var(--ember-orange);
+    margin-left: auto;
+}
+
+.relic-type-fragment {
+    color: var(--glow-purple);
+    border-color: var(--glow-purple);
+}
+
+.relic-sub-title {
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    color: var(--ash-gray);
+    margin: 12px 0 6px 0;
+    text-transform: uppercase;
+}
+
+.crafting-title {
+    color: var(--glow-cyan);
+}
+
+/* ── Crafting Forge Panel ──────────────────────────────────── */
+
+.crafting-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.crafting-row {
+    border: 1px solid var(--border-dim);
+    border-radius: 4px;
+    padding: 10px;
+    background: var(--surface-2);
+}
+
+.crafting-row.crafted {
+    opacity: 0.5;
+    border-color: var(--erosion-green);
+}
+
+.crafting-name {
+    color: var(--glow-cyan);
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.crafting-reqs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+
+.crafting-req {
+    font-size: 0.72rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid;
+}
+
+.crafting-req.met {
+    color: var(--erosion-green);
+    border-color: var(--erosion-green);
+}
+
+.crafting-req.unmet {
+    color: var(--blood-red);
+    border-color: var(--blood-red);
+}
+
+.crafting-req.sacrifice {
+    font-weight: bold;
+}
+
+.crafting-btn {
+    background: none;
+    border: 1px solid var(--glow-cyan);
+    color: var(--glow-cyan);
+    padding: 4px 12px;
+    font-family: var(--font-terminal);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.crafting-btn:hover:not(.disabled) {
+    background: var(--glow-cyan);
+    color: #000;
+}
+
+.crafting-btn.disabled {
+    border-color: var(--border-dim);
+    color: var(--ash-gray);
+    cursor: not-allowed;
+}
+
+.crafting-done {
+    color: var(--erosion-green);
+    font-size: 0.8rem;
+}
+
+/* ── Normal End: Specimen Display ──────────────────────────── */
+
+.endgame-specimen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    padding: 40px;
+    border: 1px solid var(--glow-cyan);
+    border-radius: 6px;
+    background: rgba(0, 200, 255, 0.03);
+    max-width: 600px;
+    animation: fade-in-up 1.5s ease-out;
+}
+
+.endgame-specimen-coord {
+    font-family: var(--font-terminal);
+    color: var(--ash-gray);
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+}
+
+.endgame-specimen-label {
+    font-family: var(--font-terminal);
+    color: var(--glow-cyan);
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+}
+
+.endgame-specimen-text {
+    font-family: var(--font-terminal);
+    color: var(--ash-light);
+    font-size: 1rem;
+    line-height: 2;
+    text-align: center;
 }

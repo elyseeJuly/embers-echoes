@@ -219,3 +219,31 @@ Narrative.dict.deathEchoes = {
       "（火光亮起的瞬间，你听到角落里有一个声音在对你说：‘别忘了你是谁’。但你环顾四周，只有你自己。）"
     ]
 };
+
+// ---------------------------------------------------------
+// 加密残片图鉴 (Encrypted Fragments)
+// ---------------------------------------------------------
+Narrative.dict.fragments = {
+    frag_turing:   { id:'frag_turing',   name:'破损的图灵核心',      origin:'智械文明遗迹副本',   desc:'过载的计算晶格，表面刻满了被无限循环污染的指令集。',                     weight:8,  craftsRelic:'relic_cyber'   },
+    frag_recorder: { id:'frag_recorder', name:'旧时代的录音机残片',  origin:'碳基文明废土',        desc:'磁带已腐烂，但周遭空气中仍有微弱的心跳声在持续回响。',                    weight:3,  craftsRelic:'relic_carbon'  },
+    frag_biotech:  { id:'frag_biotech',  name:'血肉改造记录晶体',    origin:'血肉畸变文明废墟',   desc:'凝固了手术记录的有机晶体，存储的不是数据，而是某种生物放弃自我时的哀鸣。', weight:4,  craftsRelic:'relic_bio'     },
+    frag_scroll:   { id:'frag_scroll',   name:'降维的奥术卷轴组件',  origin:'秘法求道者遗迹',     desc:'被从高维强行压缩至三维，内部结构完全扭曲。试图阅读会让眼球后部燃烧。',     weight:5,  craftsRelic:'relic_magic'   },
+    frag_klein:    { id:'frag_klein',    name:'无内侧克莱因瓶碎片',  origin:'几何飞升者深渊遗迹', desc:'破碎的几何体，持有者会同时以内外两个视角注视自己。',                       weight:10, craftsRelic:'relic_fractal' },
+    frag_watch:    { id:'frag_watch',    name:'逆旋怀表零件',        origin:'初代开拓者遗物',     desc:'指针一直逆时针旋转，测量的不是时间，而是距下一次死亡还有多远。',            weight:6,  craftsRelic:'relic_time'    }
+};
+
+// ---------------------------------------------------------
+// 合成配方 (Crafting Recipes)
+// ---------------------------------------------------------
+Narrative.dict.craftingRecipes = [
+    { relicId:'relic_cyber',   name:'陷入死循环的图灵核心', fragments:['frag_turing'],   costs:{ember:5000, anomalies:100},             craftText:'运算符咬合。某个悲剧的终点被激活。' },
+    { relicId:'relic_bio',     name:'不死的干细胞增生',     fragments:['frag_biotech'],  costs:{ember:3000, grayMatter:80},             craftText:'晶体中的呻吟声安静了。遗物成型。' },
+    { relicId:'relic_magic',   name:'被降维的奥术卷轴',     fragments:['frag_scroll'],   costs:{ember:4000, whispers:30},               craftText:'卷轴展开，你看到的不是文字，而是公式的蒸发。' },
+    { relicId:'relic_fractal', name:'无内侧克莱因瓶',       fragments:['frag_klein'],    costs:{ember:6000, concentrate:20},            craftText:'几何体重新组合。你感到短暂的失明。' },
+    { relicId:'relic_time',    name:'逆旋怀表',             fragments:['frag_watch'],    costs:{ember:5000, grayMatter:50, whispers:20}, craftText:'时间指针安静下来。某段永恒终结了。' },
+    { relicId:'relic_carbon',  name:'携带杂音的心跳频段',   fragments:['frag_recorder'], costs:{ember:2000, whispers:50},
+      sacrificeWanderers:10,
+      craftText:'心跳声响起。你做了一件不可撤回的事。但杂音贯穿了解译器的每一块晶格——这是系统无法读取的频率。',
+      sacrificeText:'解译器需要生命共鸣作为载频。10名游荡者将被献祭，其脑电波将永久编码进这段频段。'
+    }
+];

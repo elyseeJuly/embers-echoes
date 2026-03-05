@@ -109,6 +109,21 @@ var Nexus = {
             onBuild: function () {
                 Notifications.notify('数据金库的量子锁闪烁着微光。');
             }
+        },
+        'conceptDecrypter': {
+            name: '概念解译器',
+            desc: '解译并重构陨落文明的加密残片，合成完整的文明遗物',
+            effect: '解锁遗物合成系统',
+            maximum: 1,
+            cost: function () {
+                return { 'ember': 500, 'grayMatter': 100, 'whispers': 20 };
+            },
+            availablePhase: Engine.PHASES.MAP,
+            onBuild: function () {
+                Notifications.notify('概念解译器的晶格阵列缓缓亮起。深层逻辑开始运转。');
+                Notifications.notify('遗物合成系统已解锁。在遗物面板中查看你的加密残片。');
+                if (typeof Relics !== 'undefined') Relics.updateView();
+            }
         }
     },
 

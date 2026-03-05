@@ -16,7 +16,8 @@ var StateManager = {
 		'grayMatter': 50,     // base cap, increased by Gray Synthesizer
 		'whispers': 20,     // base cap
 		'concentrate': 10,     // base cap, increased by upgrades
-		'relics': 10      // base cap
+		'relics': 10,     // base cap
+		'anomalies': 200  // base cap, consumed by crafting
 	},
 
 	// Income sources (set by Population module)
@@ -36,6 +37,7 @@ var StateManager = {
 				buildings: {},
 				workers: {},
 				relicInventory: [],
+				fragmentInventory: [],
 				character: {
 					san: 50,
 					erosion: 0,
@@ -292,6 +294,26 @@ var StateManager = {
 	},
 
 	// ── Relics ───────────────────────────────────────────────
+
+	/**
+	 * Add a fragment (raw map drop) to the player's inventory by id
+	 */
+	addFragment: function (id) {
+		var inv = this.get('fragmentInventory') || [];
+		inv.push(id);
+		this.set('fragmentInventory', inv);
+	},
+
+	hasFragment: function (id) {
+		var inv = this.get('fragmentInventory') || [];
+		return inv.indexOf(id) !== -1;
+	},
+
+	consumeFragment: function (id) {
+		var inv = this.get('fragmentInventory') || [];
+		var idx = inv.indexOf(id);
+		if (idx !== -1) { inv.splice(idx, 1); this.set('fragmentInventory', inv); }
+	},
 
 	/**
 	 * Add a relic to the player's inventory by id

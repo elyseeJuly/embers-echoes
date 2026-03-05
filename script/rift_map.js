@@ -10,14 +10,16 @@ var RiftMap = {
     RADIUS: 10,
 
     TILE: {
-        CAMP: 'H', // Home base
-        VOID: '.', // Empty space
-        RUIN: '#', // Destroyed structure
-        DEBRIS: ',', // Minor obstacle
-        ANOMALY: '*', // Event/combat node
-        CACHE: 'C', // Resource node
-        PORTAL: '@', // Return portal
-        FOG: ' '  // Unknown
+        CAMP: 'H',     // Home base
+        VOID: '.',     // Empty space
+        RUIN: '#',     // Destroyed structure
+        DEBRIS: ',',   // Minor obstacle
+        ANOMALY: '*',  // Combat node
+        CACHE: 'C',    // Resource node
+        SIGNAL: '?',   // Text event node (no combat)
+        DUNGEON: 'D',  // Deep ruin dungeon (multi-wave)
+        PORTAL: '@',   // Return portal
+        FOG: ' '       // Unknown
     },
 
     // Map state
@@ -74,6 +76,7 @@ var RiftMap = {
             RiftMap.TILE.VOID, RiftMap.TILE.VOID, RiftMap.TILE.VOID,
             RiftMap.TILE.DEBRIS, RiftMap.TILE.DEBRIS,
             RiftMap.TILE.RUIN,
+            RiftMap.TILE.SIGNAL,
             RiftMap.TILE.ANOMALY,
             RiftMap.TILE.CACHE
         ];
@@ -86,12 +89,14 @@ var RiftMap = {
                 var key = nx + ',' + ny;
 
                 if (!RiftMap.grid[key]) {
-                    // Check distance from origin for scaling difficulty/rewards (simplified)
                     var dist = Math.abs(nx) + Math.abs(ny);
 
                     if (Math.random() < 0.05 && dist > 10) {
                         // Rare portal spawn far out
                         RiftMap.setTile(nx, ny, RiftMap.TILE.PORTAL);
+                    } else if (Math.random() < 0.05 && dist > 8) {
+                        // Dungeon spawn at medium-far distance
+                        RiftMap.setTile(nx, ny, RiftMap.TILE.DUNGEON);
                     } else {
                         var randTile = types[Math.floor(Math.random() * types.length)];
                         RiftMap.setTile(nx, ny, randTile);
@@ -234,13 +239,18 @@ var RiftMap = {
 
             case RiftMap.TILE.CACHE:
                 var emberAmt = 15 + Math.floor(Math.random() * 20);
+                // Also drops some anomaly samples
+                var anomalyAmt = 5 + Math.floor(Math.random() * 10);
                 Survival.addLoot('ember', emberAmt);
-                Notifications.notify('发现资源节点：+' + emberAmt + ' 余烬。');
-                // 10% chance for a bonus common relic
-                if (Math.random() < 0.10) {
-                    var bonusRelic = RiftMap.pickRandomRelic('common');
-                    $SM.addRelic(bonusRelic.id);
-                    Notifications.notify('节点深处有一块压缩的文明碎片——【' + bonusRelic.name + '】(来自：' + bonusRelic.origin + ')');
+                $SM.add('stores.anomalies', anomalyAmt);
+                Notifications.notify('发现资源节点：+' + emberAmt + ' 余烬，+' + anomalyAmt + ' 异常样本。');
+                // 5% chance for a bonus common fragment
+                if (Math.random() < 0.05 && typeof Narrative !== 'undefined' && Narrative.dict.fragments) {
+                    var bonusFrag = RiftMap.pickRandomFragment(['frag_recorder', 'frag_biotech']);
+                    if (bonusFrag) {
+                        $SM.addFragment(bonusFrag.id);
+                        Notifications.notify('节点深处藏有一块加密残片——【' + bonusFrag.name + '】(重 ' + bonusFrag.weight + 'kg)');
+                    }
                 }
                 RiftMap.setTile(x, y, RiftMap.TILE.VOID); // Deplete
                 break;
@@ -262,21 +272,58 @@ var RiftMap = {
                 break;
 
             case RiftMap.TILE.RUIN:
-                // 30% chance to find a relic
-                if (Math.random() < 0.30) {
-                    var tier = RiftMap._pickRelicTier();
-                    var relic = RiftMap.pickRandomRelic(tier);
-                    $SM.addRelic(relic.id);
-                    Notifications.notify('在废墟深处发现了文明遗物——【' + relic.name + '】\n来源：' + relic.origin);
+                // 25% chance to find a fragment
+                if (Math.random() < 0.25 && typeof Narrative !== 'undefined' && Narrative.dict.fragments) {
+                    var frag = RiftMap.pickRandomFragment(['frag_biotech', 'frag_scroll']);
+                    if (frag) {
+                        $SM.addFragment(frag.id);
+                        Notifications.notify('在废墟深处发现了加密残片——【' + frag.name + '】\n来源：' + frag.origin + '（重 ' + frag.weight + 'kg，将在概念解译器中合成）');
+                    }
                 } else {
+                    // Anomaly sample drop
+                    var sampleAmt = 3 + Math.floor(Math.random() * 8);
+                    $SM.add('stores.anomalies', sampleAmt);
                     if (typeof Narrative !== 'undefined' && Narrative.dict && Narrative.dict.mapNodes) {
                         var rc = Narrative.dict.mapNodes.ruins_city;
-                        Notifications.notify(rc[Math.floor(Math.random() * rc.length)]);
+                        Notifications.notify(rc[Math.floor(Math.random() * rc.length)] + '（+' + sampleAmt + ' 异常样本）');
                     } else {
-                        Notifications.notify('这里只有破碎的晶体。');
+                        Notifications.notify('这里只有破碎的晶体。+' + sampleAmt + ' 异常样本。');
                     }
                 }
                 RiftMap.setTile(x, y, RiftMap.TILE.VOID);
+                break;
+
+            case RiftMap.TILE.SIGNAL:
+                // Pure text event node — no combat, choices may yield anomalies/whispers/fragments
+                RiftMap.setTile(x, y, RiftMap.TILE.VOID);
+                if (typeof Narrative !== 'undefined' && Narrative.dict && Narrative.dict.events) {
+                    var evPool = Narrative.dict.events.filter(function (ev) {
+                        if (!ev.condition) return true;
+                        var parts = ev.condition.split(' ');
+                        if (parts.length === 3) {
+                            var val = $SM.get('stores.' + parts[0]) || $SM.get('character.' + parts[0]) || 0;
+                            return val > parseInt(parts[2], 10);
+                        }
+                        return true;
+                    });
+                    if (evPool.length > 0) {
+                        var sigEv = evPool[Math.floor(Math.random() * evPool.length)];
+                        RiftMap.showExploreEvent(sigEv);
+                        break;
+                    }
+                }
+                Notifications.notify('信号源已衰竭。只剩下一段无意义的噪音。');
+                break;
+
+            case RiftMap.TILE.DUNGEON:
+                // Launch dungeon crawl (multi-wave + boss)
+                RiftMap.setTile(x, y, RiftMap.TILE.VOID);
+                if (typeof Combat !== 'undefined' && Combat.Dungeon) {
+                    Combat.Dungeon.start();
+                } else {
+                    Notifications.notify('遗迹副本入口坍塌。只找到了一些残骸。');
+                    $SM.add('stores.anomalies', 20);
+                }
                 break;
 
             case RiftMap.TILE.PORTAL:
@@ -298,32 +345,30 @@ var RiftMap = {
     },
 
     /**
-     * Pick a relic tier by weighted random.
-     * 'common' 70%, 'special' 28%, 'anchor' 2%
+     * Pick a random fragment from Narrative.dict.fragments filtered by allowed IDs.
+     * If allowedIds is empty or undefined, picks from all fragments.
      */
-    _pickRelicTier: function () {
-        var roll = Math.random();
-        if (roll < 0.02) return 'anchor';
-        if (roll < 0.30) return 'special';
-        return 'common';
+    pickRandomFragment: function (allowedIds) {
+        if (!Narrative.dict || !Narrative.dict.fragments) return null;
+        var pool = [];
+        var frags = Narrative.dict.fragments;
+        for (var key in frags) {
+            if (!allowedIds || allowedIds.length === 0 || allowedIds.indexOf(frags[key].id) !== -1) {
+                pool.push(frags[key]);
+            }
+        }
+        if (pool.length === 0) return null;
+        return pool[Math.floor(Math.random() * pool.length)];
     },
 
-    /**
-     * Pick a random relic from Narrative.dict.relics of the given type.
-     * Falls back to 'common' if none found for the requested type.
-     */
+    // Legacy helper still used by combat — picks named relic info for display
     pickRandomRelic: function (type) {
         var relics = Narrative.dict.relics;
         var pool = [];
         for (var key in relics) {
-            if (relics[key].type === type) pool.push(relics[key]);
+            if (!type || relics[key].type === type) pool.push(relics[key]);
         }
-        if (pool.length === 0) {
-            // Fallback: pick any common
-            for (var key in relics) {
-                if (relics[key].type === 'common') pool.push(relics[key]);
-            }
-        }
+        if (pool.length === 0) { for (var key in relics) pool.push(relics[key]); }
         return pool[Math.floor(Math.random() * pool.length)];
     },
 

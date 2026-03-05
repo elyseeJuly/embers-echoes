@@ -56,39 +56,125 @@ var Endgame = {
     },
 
     showFinalChoice: function ($container) {
-        if (typeof Narrative !== 'undefined' && Narrative.dict && Narrative.dict.finalInquiry) {
-            Endgame.runInquiry($container, Narrative.dict.finalInquiry);
+        // BRANCH: determine which ending the player is on
+        var ending = Endgame.evaluateEndings();
+
+        if (ending === 'bad') {
+            Endgame.executeBadEnd($container);
+        } else if (ending === 'normal') {
+            Endgame.executeNormalEnd($container);
         } else {
-            // Fallback if dict missing
-            var $question = $('<div>').addClass('endgame-question fade-in').text("『是否重启循环？保留觉知，还是归于数据海洋？』");
-            $container.append($question);
-
-            var $choices = $('<div>').addClass('endgame-choices fade-in').css('animation-delay', '2s');
-
-            var $btnLoop = new Button.Button({
-                text: '【携忆重启】（开启下一轮回响）',
-                click: function () { Endgame.executeClimax('loop'); }
-            });
-            $btnLoop.addClass('ee-btn--primary');
-
-            var $btnSink = new Button.Button({
-                text: '【融入海洋】（真正的终结）',
-                click: function () { Endgame.executeClimax('sink'); }
-            });
-
-            $choices.append($btnLoop).append($btnSink);
-            $container.append($choices);
+            // 'true' — player has all required relics including relic_carbon
+            if (typeof Narrative !== 'undefined' && Narrative.dict && Narrative.dict.finalInquiry) {
+                Endgame.runInquiry($container, Narrative.dict.finalInquiry);
+            } else {
+                Endgame.executeClimax('loop');
+            }
         }
+    },
+
+    /**
+     * Evaluate which ending the player qualifies for.
+     * Returns 'bad', 'normal', or 'true'.
+     */
+    evaluateEndings: function () {
+        if (!Narrative.dict || !Narrative.dict.finalInquiry) return 'bad';
+        var questions = Narrative.dict.finalInquiry.questions || [];
+        var hasAnyValidRelic = false;
+        var hasCarbon = $SM.hasRelic('relic_carbon');
+
+        for (var i = 0; i < questions.length; i++) {
+            var q = questions[i];
+            for (var j = 0; j < q.validRelics.length; j++) {
+                if ($SM.hasRelic(q.validRelics[j])) { hasAnyValidRelic = true; break; }
+            }
+        }
+
+        if (hasCarbon && hasAnyValidRelic) return 'true';
+        if (hasAnyValidRelic) return 'normal';
+        return 'bad';
+    },
+
+    /**
+     * BAD END: player has no valid relics.
+     * UI wipes — only the lone ember button remains.
+     */
+    executeBadEnd: function ($container) {
+        var badLines = [
+            "主神扫视了你贫瘠的内存。",
+            "'无效变量。逻辑无法闭环。'",
+            "你的记忆被瞬间清空。",
+            "大地图破碎成像素。所有数据化为虚无。",
+            "只剩下一个按钮。"
+        ];
+        Endgame.playSequence($container, badLines, 0, function () {
+            if (typeof Gallery !== 'undefined') {
+                Gallery.recordEnding('END_BAD', '永恒的抽水机', '没有收集到足够的遗物。再次成为主神空间的干电池。');
+            }
+            // Wipe the entire UI back to scratch
+            setTimeout(function () {
+                document.body.innerHTML = '<div id="bad-end-terminal" style="' +
+                    'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+                    'height:100vh;background:#000;font-family:monospace;gap:40px;">' +
+                    '<div style="color:#333;font-size:0.85rem;letter-spacing:3px;">[ 系统记录 — 格式化完成 ]</div>' +
+                    '<button id="bad-end-btn" style="' +
+                    'background:none;border:1px solid #444;color:#555;padding:15px 40px;' +
+                    'font-family:monospace;font-size:1rem;cursor:pointer;letter-spacing:2px;' +
+                    'transition:all 0.5s;"' +
+                    ' onmouseover="this.style.color=\'#fff\';this.style.borderColor=\'#fff\'"' +
+                    ' onmouseout="this.style.color=\'#555\';this.style.borderColor=\'#444\'"' +
+                    ' onclick="location.reload()">提取余烬</button>' +
+                    '</div>';
+                // Preserve echoes but wipe run save
+                if (typeof Echoes !== 'undefined') Echoes.addEchoes(50);
+                Engine.deleteSave();
+            }, 3000);
+        });
+    },
+
+    /**
+     * NORMAL END: player has some relics but missing relic_carbon.
+     * Preserved as a specimen at (0,0). No escape, no death.
+     */
+    executeNormalEnd: function ($container) {
+        var normalLines = [
+            "主神的防火墙出现了一丝裂缝，",
+            "但它立刻用一种你无法理解的代码将裂缝修补。",
+            "'你收集了很好的标本，轮回者。'",
+            "'你证明了万物的衰亡。'",
+            "你没有被抹杀。",
+            "你被永久地保存在了 (0,0) 的虚空中，",
+            "与那些陨落的文明一起，成为了观察样本。"
+        ];
+        Endgame.playSequence($container, normalLines, 0, function () {
+            if (typeof Gallery !== 'undefined') {
+                Gallery.recordEnding('END_NORMAL', '高维博物馆的藏品', '收集了部分遗物但缺少碳基锚点。被永久保存为观察样本。');
+            }
+            $container.empty();
+            var $specimen = $('<div>').addClass('endgame-specimen');
+            $('<div>').addClass('endgame-specimen-coord').text('[ 坐标 (0, 0) — 已锁定 ]').appendTo($specimen);
+            $('<div>').addClass('endgame-specimen-label').text('标本编号 #' + Math.floor(Math.random() * 9999).toString().padStart(4, '0')).appendTo($specimen);
+            $('<div>').addClass('endgame-specimen-text').html(
+                '状态：<span style="color:var(--glow-cyan)">永久保存</span><br>' +
+                '与陨落文明并列展示于主神观察舱。<br>' +
+                '缺失变量：<span style="color:var(--ember-orange)">碳基心跳频段</span>'
+            ).appendTo($specimen);
+            $('<div>').addClass('endgame-trapped-hint').text('（或许下一次轮回中，你能找到那段最残破的杂音。）').appendTo($specimen);
+            $container.append($specimen);
+            // Save echoes, delete run save, reload after 10s
+            if (typeof Echoes !== 'undefined') Echoes.addEchoes(150);
+            setTimeout(function () { Engine.deleteSave(); location.reload(); }, 12000);
+        });
     },
 
     runInquiry: function ($container, inquiryData) {
         var $intro = $('<div>').addClass('endgame-text fade-in').css('color', 'var(--ember-orange)').text(inquiryData.intro);
         $container.append($intro);
-
         setTimeout(function () {
             Endgame.askQuestion($container, inquiryData.questions, 0);
         }, 3000);
     },
+
 
     askQuestion: function ($container, questions, index) {
         if (index >= questions.length) {
