@@ -14,7 +14,7 @@ var StateManager = {
 	_storageCaps: {
 		'ember': 100,    // base cap, increased by Ember Furnace
 		'grayMatter': 50,     // base cap, increased by Gray Synthesizer
-		'whispers': 20,     // base cap
+		'whispers': 30,     // base 30; riftBeacon adds +20
 		'concentrate': 10,     // base cap, increased by upgrades
 		'relics': 10,     // base cap
 		'anomalies': 200  // base cap, consumed by crafting
@@ -40,6 +40,7 @@ var StateManager = {
 				fragmentInventory: [],
 				character: {
 					san: 50,
+					maxSan: 100,
 					erosion: 0,
 					godPressure: 0,
 					hp: 10,
@@ -139,9 +140,10 @@ var StateManager = {
 			if (newVal > cap) newVal = cap;
 		}
 
-		// SAN clamped to [0, 100]
+		// SAN clamped to [0, maxSan]
 		if (stateName === 'character.san') {
-			newVal = Math.max(0, Math.min(100, newVal));
+			var maxSan = this.get('character.maxSan') || 100;
+			newVal = Math.max(0, Math.min(maxSan, newVal));
 		}
 
 		// Erosion clamped to [0, 100]
@@ -206,6 +208,14 @@ var StateManager = {
 		else if (resourceKey === 'grayMatter') {
 			bonus += (buildings['graySynthesizer'] || 0) * 30;
 		}
+		// Data Vault: +10 relics cap each
+		else if (resourceKey === 'relics') {
+			bonus += (buildings['dataVault'] || 0) * 10;
+		}
+		// Rift Beacon: +20 whispers cap (once)
+		else if (resourceKey === 'whispers') {
+			bonus += Math.min(buildings['riftBeacon'] || 0, 1) * 20;
+		}
 
 		return base + bonus;
 	},
@@ -245,12 +255,15 @@ var StateManager = {
 	},
 
 	/**
-	 * Atomic income collection — the heart of the economy
-	 * For each worker type, validate that ALL consumption can be satisfied.
-	 * If not, that worker type skips this tick entirely.
+	 * Atomic income collection — the heart of the economy.
+	 * In assimilation zone (SAN > 70), production outputs get a +50% multiplier.
 	 */
 	collectIncome: function () {
 		var workers = this.get('workers') || {};
+		var san = this.get('character.san') || 50;
+		var maxSan = this.get('character.maxSan') || 100;
+		var assimilationThreshold = maxSan - 30;
+		var productionMultiplier = (san > assimilationThreshold) ? 1.5 : 1.0;
 
 		for (var source in this._income) {
 			var inc = this._income[source];
@@ -261,39 +274,33 @@ var StateManager = {
 			var canProduce = true;
 			for (var resource in inc.stores) {
 				if (inc.stores[resource] < 0) {
-					// This is consumption
 					var needed = Math.abs(inc.stores[resource]) * count;
 					var available = this.get('stores.' + resource) || 0;
-					if (available < needed) {
-						canProduce = false;
-						break;
-					}
+					if (available < needed) { canProduce = false; break; }
 				}
 			}
-
-			// If resources insufficient, this worker type stops for this tick
 			if (!canProduce) continue;
 
-			// Apply production and consumption
+			// Apply income
 			for (var resource in inc.stores) {
 				var amount = inc.stores[resource] * count;
-
-				// Apply buffs
+				// Assimilation zone: +50% to all production
+				if (amount > 0 && productionMultiplier !== 1.0) {
+					amount = Math.floor(amount * productionMultiplier);
+				}
+				// Ember reflux perk: +15% ember on top
 				if (amount > 0 && resource === 'ember') {
 					var buffs = this.get('character.buffs') || {};
-					if (buffs['ember_reflux']) {
-						amount *= 1.15;
-					}
+					if (buffs['ember_reflux']) { amount = Math.floor(amount * 1.15); }
 				}
-
 				this.add('stores.' + resource, amount, true);
 			}
 		}
-
 		this.fireUpdate('stores');
 	},
 
 	// ── Relics ───────────────────────────────────────────────
+
 
 	/**
 	 * Add a fragment (raw map drop) to the player's inventory by id

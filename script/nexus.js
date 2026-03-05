@@ -73,7 +73,9 @@ var Nexus = {
             },
             availablePhase: Engine.PHASES.ABYSS,
             onBuild: function () {
-                Notifications.notify('认知屏障构筑完成。混沌的低语变得遥远了。');
+                $SM.add('character.maxSan', 10);
+                var newMax = $SM.get('character.maxSan') || 110;
+                Notifications.notify('认知屏障构筑完成。理智上限提升至 ' + newMax + '。混沌的低语变得遥远了。');
             }
         },
         'riftBeacon': {

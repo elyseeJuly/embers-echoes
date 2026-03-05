@@ -2,12 +2,19 @@
  * 余烬回响 — Sanity System
  * ==========================
  * SAN dynamic gating, Whispers production, Erosion events.
+ * Featuring: 
+ *  - Gaze into the Abyss (active sanity drain for whispers)
+ *  - Inject Inhibitor (emergency erosion relief)
+ *  - Dynamic thresholds based on maxSan
  */
 var Sanity = {
 
-    // SAN thresholds
-    MADNESS_THRESHOLD: 30,
-    ASSIMILATION_THRESHOLD: 70,
+    // Thresholds
+    MADNESS_THRESHOLD: 30, // Absolute value
+
+    // Action cooldowns
+    _gazeCooldown: 0,
+    _injectCooldown: 0,
 
     // Last known SAN zone for detecting transitions
     _lastZone: null,
@@ -17,8 +24,137 @@ var Sanity = {
         $.Dispatch('phaseChange').subscribe(function (e) {
             if (e.to >= Engine.PHASES.ABYSS) {
                 Sanity.updateVisuals();
+                Sanity.initActionButtons();
             }
         });
+
+        // If loading late game
+        if (Engine.getPhase() >= Engine.PHASES.ABYSS) {
+            Sanity.initActionButtons();
+        }
+    },
+
+    /**
+     * Set up the 'Gaze into the Abyss' and 'Inject Inhibitor' buttons in the Action panel
+     */
+    initActionButtons: function () {
+        if ($('#action-gaze').length > 0) return; // already initialized
+
+        var $storesPanel = $('#stores-panel');
+        if ($storesPanel.length === 0) return;
+
+        var $actionsOuter = $('#sanity-actions-container');
+        if ($actionsOuter.length === 0) {
+            $actionsOuter = $('<div>').attr('id', 'sanity-actions-container').css({
+                'margin-top': '20px',
+                'border-top': '1px dotted var(--border-dim)',
+                'padding-top': '15px'
+            }).appendTo($storesPanel);
+            $('<div>').addClass('ee-panel-title').text('战术动作').appendTo($actionsOuter);
+        }
+
+        // Action 1: Gaze into the Abyss
+        var $btnGaze = new Button.Button({
+            id: 'action-gaze',
+            text: '【直视深渊】',
+            click: function () { Sanity.actionGaze(); }
+        });
+        $btnGaze.addClass('ee-btn--primary');
+        $('<div>').addClass('ee-tooltip').text('主动降低理智以窥探高维。\n耗费: 余烬x10, 理智x5\n产出: 低语值x1').appendTo($btnGaze);
+        $actionsOuter.append($btnGaze);
+
+        // Action 2: Inject Inhibitor (If MAP phase or later)
+        if (Engine.getPhase() >= Engine.PHASES.MAP) {
+            var $btnInject = new Button.Button({
+                id: 'action-inject',
+                text: '【注射抑制剂】',
+                click: function () { Sanity.actionInject(); }
+            });
+            $btnInject.css('margin-left', '10px');
+            $('<div>').addClass('ee-tooltip').text('强制重装心智防火墙。\n耗费: 浓缩液x2, 灰质x20\n效果: 理智重置为50, 侵蚀度-30').appendTo($btnInject);
+            $actionsOuter.append($btnInject);
+        }
+
+        // Action UI update tick
+        setInterval(Sanity.updateActionButtons, 1000);
+    },
+
+    actionGaze: function () {
+        if (Sanity._gazeCooldown > 0) return;
+        var ember = $SM.get('stores.ember') || 0;
+        var san = $SM.get('character.san') || 50;
+
+        if (ember < 10) { Notifications.notify('余烬不足以支撑观察屏障。'); return; }
+        if (san < 5) { Notifications.notify('理智已无法承受更多高维画面。'); return; }
+
+        // Execute action
+        $SM.add('stores.ember', -10);
+        $SM.add('character.san', -5);
+        $SM.add('stores.whispers', 1);
+        Notifications.notify('深渊向你回眸。低语声在脑海中炸开。');
+
+        Sanity._gazeCooldown = 3;
+        Sanity.updateActionButtons();
+    },
+
+    actionInject: function () {
+        if (Sanity._injectCooldown > 0) return;
+        var conc = $SM.get('stores.concentrate') || 0;
+        var gray = $SM.get('stores.grayMatter') || 0;
+
+        if (conc < 2 || gray < 20) { Notifications.notify('抑制剂合成材料不足 (需 浓缩液x2, 灰质x20)。'); return; }
+
+        // Execute action
+        $SM.add('stores.concentrate', -2);
+        $SM.add('stores.grayMatter', -20);
+        $SM.set('character.san', 50);
+        $SM.add('character.erosion', -30);
+        Notifications.notify('抑制剂注入。冰冷的逻辑重新接管了大脑。');
+
+        // White Flash CSS
+        var $overlay = $('<div>').css({
+            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'white', zIndex: 9999, pointerEvents: 'none',
+            opacity: 1, transition: 'opacity 0.8s ease-out'
+        }).appendTo('body');
+        
+        setTimeout(function() { $overlay.css('opacity', 0); }, 50);
+        setTimeout(function() { $overlay.remove(); }, 1000);
+
+        Sanity._injectCooldown = 120;
+        Sanity.updateActionButtons();
+    },
+
+    updateActionButtons: function () {
+        var $btnGaze = $('#action-gaze');
+        if ($btnGaze.length > 0) {
+            if (Sanity._gazeCooldown > 0) {
+                Sanity._gazeCooldown--;
+                Button.setDisabled($btnGaze, true);
+                $btnGaze.find('span').text('【冷却中 ' + Sanity._gazeCooldown + 's】');
+            } else {
+                var san = $SM.get('character.san') || 50;
+                if (san < 5) {
+                    Button.setDisabled($btnGaze, true);
+                    $btnGaze.find('span').text('【无法承受深渊】');
+                } else {
+                    Button.setDisabled($btnGaze, false);
+                    $btnGaze.find('span').text('【直视深渊】');
+                }
+            }
+        }
+
+        var $btnInject = $('#action-inject');
+        if ($btnInject.length > 0) {
+            if (Sanity._injectCooldown > 0) {
+                Sanity._injectCooldown--;
+                Button.setDisabled($btnInject, true);
+                $btnInject.find('span').text('【冷却中 ' + Sanity._injectCooldown + 's】');
+            } else {
+                Button.setDisabled($btnInject, false);
+                $btnInject.find('span').text('【注射抑制剂】');
+            }
+        }
     },
 
     /**
@@ -26,28 +162,25 @@ var Sanity = {
      */
     tick: function () {
         var san = $SM.get('character.san') || 50;
+        var maxSan = $SM.get('character.maxSan') || 100;
         var erosion = $SM.get('character.erosion') || 0;
-        var zone = Sanity.getZone(san);
+        var zone = Sanity.getZone(san, maxSan);
 
         // Zone-specific effects
         if (zone === 'madness') {
-            // Produce Whispers
-            $SM.add('stores.whispers', 0.1, true);
-            // Erosion increases faster
+            // MADNESS (SAN < 30) - high risk, high reward
+            $SM.add('stores.whispers', 0.5, true);
             var erosionRate = 0.5;
-            if ($SM.hasPerk('entropy_resist')) {
-                erosionRate *= 0.75;
-            }
+            if ($SM.hasPerk('entropy_resist')) { erosionRate *= 0.75; }
             $SM.add('character.erosion', erosionRate, true);
-            // SAN drifts slightly toward 0
-            $SM.add('character.san', -0.1, true);
+
         } else if (zone === 'assimilation') {
-            // Safe but constricted — ember bleeds away
-            $SM.add('stores.ember', -1, true);
-            // SAN drifts toward 100
-            $SM.add('character.san', 0.05, true);
+            // ASSIMILATION (SAN > maxSan - 30) - super productivity (handled in state_manager collectIncome)
+            // But costs extra 2 ember per tick due to system heat
+            $SM.add('stores.ember', -2, true);
+
         } else {
-            // Awakened zone — stable, slight natural SAN drift toward 50
+            // AWAKENED - Safe, drifts toward 50
             var drift = (50 - san) * 0.01;
             $SM.add('character.san', drift, true);
         }
@@ -64,7 +197,7 @@ var Sanity = {
         }
 
         // Natural erosion decay (very slow)
-        if (erosion > 0) {
+        if (zone !== 'madness' && erosion > 0) {
             $SM.add('character.erosion', -0.05, true);
         }
 
@@ -78,10 +211,12 @@ var Sanity = {
         Sanity._lastZone = zone;
     },
 
-    getZone: function (san) {
+    getZone: function (san, maxSan) {
         if (san === undefined) san = $SM.get('character.san') || 50;
+        if (maxSan === undefined) maxSan = $SM.get('character.maxSan') || 100;
+
         if (san < Sanity.MADNESS_THRESHOLD) return 'madness';
-        if (san > Sanity.ASSIMILATION_THRESHOLD) return 'assimilation';
+        if (san > (maxSan - 30)) return 'assimilation';
         return 'awakened';
     },
 
@@ -89,7 +224,7 @@ var Sanity = {
         if (to === 'madness') {
             Notifications.notify('意识在崩塌。低语声充满了一切。');
         } else if (to === 'assimilation') {
-            Notifications.notify('理智过载。思维被规训化。余烬开始流失。');
+            Notifications.notify('理智过载。系统进入超频状态，但能量急剧消耗。');
         } else if (to === 'awakened') {
             Notifications.notify('意识回到了边缘地带。清醒，但脆弱。');
         }
@@ -101,7 +236,8 @@ var Sanity = {
     updateVisuals: function () {
         var $body = $('body');
         var san = $SM.get('character.san') || 50;
-        var zone = Sanity.getZone(san);
+        var maxSan = $SM.get('character.maxSan') || 100;
+        var zone = Sanity.getZone(san, maxSan);
 
         $body.removeClass('glitch-blood rigid-code');
 
@@ -112,13 +248,13 @@ var Sanity = {
         }
 
         // Update SAN display in stores
-        Sanity.updateSanDisplay(san);
+        Sanity.updateSanDisplay(san, maxSan);
     },
 
     /**
-     * SAN display: fuzzy text if < 70, numeric if >= 70
+     * SAN display
      */
-    updateSanDisplay: function (san) {
+    updateSanDisplay: function (san, maxSan) {
         var $sanRow = $('#san-display');
 
         if ($sanRow.length === 0) {
@@ -132,18 +268,19 @@ var Sanity = {
         }
 
         var $val = $sanRow.find('.san-val');
+        var threshold = maxSan - 30;
 
-        if (san >= 70) {
-            $val.text(Math.floor(san));
+        if (san > threshold) {
+            $val.text(Math.floor(san) + ' / ' + maxSan);
             $val.css('color', 'var(--ice-blue)');
         } else if (san >= 50) {
-            $val.text('稳定');
+            $val.text('稳定 (' + Math.floor(san) + ')');
             $val.css('color', 'var(--ash-gray)');
         } else if (san >= 30) {
-            $val.text('动摇');
+            $val.text('动摇 (' + Math.floor(san) + ')');
             $val.css('color', 'var(--ember-orange)');
         } else if (san >= 15) {
-            $val.text('边缘崩溃');
+            $val.text('边缘崩溃 (' + Math.floor(san) + ')');
             $val.css('color', 'var(--blood-red)');
         } else {
             $val.text('█̷̢̛̤̪ↂ̶̧̛ↂ̴̛̤̪');
@@ -156,18 +293,13 @@ var Sanity = {
     erosionEvent: function (severity) {
         switch (severity) {
             case 'moderate':
-                // Lose some ember
                 var loss = Math.floor(($SM.get('stores.ember') || 0) * 0.1);
                 $SM.add('stores.ember', -loss);
                 Notifications.notify('侵蚀波动。' + loss + ' 余烬被吞噬。');
                 break;
-
             case 'high':
-                // Lose a worker
                 var workers = $SM.get('workers') || {};
-                var workerTypes = Object.keys(workers).filter(function (k) {
-                    return workers[k] > 0 && k !== 'wanderer';
-                });
+                var workerTypes = Object.keys(workers).filter(function (k) { return workers[k] > 0 && k !== 'wanderer'; });
                 if (workerTypes.length > 0) {
                     var type = workerTypes[Math.floor(Math.random() * workerTypes.length)];
                     $SM.add('workers.' + type, -1);
@@ -175,13 +307,9 @@ var Sanity = {
                     Notifications.notify('一个' + name + '被侵蚀吞没了。');
                 }
                 break;
-
             case 'critical':
-                // Building damage
                 var buildings = $SM.get('buildings') || {};
-                var bldTypes = Object.keys(buildings).filter(function (k) {
-                    return buildings[k] > 0;
-                });
+                var bldTypes = Object.keys(buildings).filter(function (k) { return buildings[k] > 0; });
                 if (bldTypes.length > 0) {
                     var bld = bldTypes[Math.floor(Math.random() * bldTypes.length)];
                     $SM.add('buildings.' + bld, -1);

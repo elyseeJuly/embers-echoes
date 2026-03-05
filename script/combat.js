@@ -256,7 +256,20 @@ Combat.Dungeon = {
         if (Combat.active) return;
         Combat.Dungeon.active = true;
         Combat.Dungeon.wave = 0;
-        Combat.Dungeon.fragmentId = Combat.Dungeon.DUNGEON_LOOT[dungeonType || 'default'];
+
+        // Smart Loot: Filter out fragments the player already has or has crafted
+        var candidates = ['frag_turing', 'frag_klein', 'frag_watch'];
+        var missing = candidates.filter(function (id) {
+            var relicId = id.replace('frag_', 'relic_'); // Assumes matching naming scheme
+            return !$SM.hasFragment(id) && !$SM.hasRelic(relicId);
+        });
+
+        // If missing any, pick one randomly. Otherwise return null (gives anomalies at end)
+        if (missing.length > 0) {
+            Combat.Dungeon.fragmentId = missing[Math.floor(Math.random() * missing.length)];
+        } else {
+            Combat.Dungeon.fragmentId = null;
+        }
 
         Notifications.notify('[深渊遗迹] 进入副本。前方有 ' + Combat.Dungeon.maxWaves + ' 波守卫和一名最终守门人。');
         Notifications.notify('[深渊遗迹] 警告：副本内无法存档。死亡将清空本次探索收益。');
