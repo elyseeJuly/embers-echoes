@@ -207,19 +207,46 @@ var RiftMap = {
     resolveTileEvent: function (x, y, tile) {
         switch (tile) {
             case RiftMap.TILE.VOID:
-                if (Math.random() < 0.1 && typeof Narrative !== 'undefined' && Narrative.dict && Narrative.dict.mapNodes) {
+                // 20% chance to trigger a narrative exploration event
+                if (Math.random() < 0.20 && typeof Narrative !== 'undefined' && Narrative.dict && Narrative.dict.events) {
+                    var evPool = Narrative.dict.events.filter(function (ev) {
+                        // Simple condition parsing: 'ember > N', 'erosion > N', 'whispers > N'
+                        if (!ev.condition) return true;
+                        var parts = ev.condition.split(' ');
+                        if (parts.length === 3) {
+                            var val = $SM.get('stores.' + parts[0]) || $SM.get('character.' + parts[0]) || 0;
+                            return val > parseInt(parts[2], 10);
+                        }
+                        return true;
+                    });
+                    if (evPool.length > 0) {
+                        var ev = evPool[Math.floor(Math.random() * evPool.length)];
+                        RiftMap.showExploreEvent(ev);
+                        break;
+                    }
+                }
+                // Ambient flavour text
+                if (Math.random() < 0.15 && typeof Narrative !== 'undefined' && Narrative.dict && Narrative.dict.mapNodes) {
                     var wl = Narrative.dict.mapNodes.wasteland;
                     Notifications.notify(wl[Math.floor(Math.random() * wl.length)]);
                 }
                 break;
+
             case RiftMap.TILE.CACHE:
                 var emberAmt = 15 + Math.floor(Math.random() * 20);
                 Survival.addLoot('ember', emberAmt);
                 Notifications.notify('发现资源节点：+' + emberAmt + ' 余烬。');
+                // 10% chance for a bonus common relic
+                if (Math.random() < 0.10) {
+                    var bonusRelic = RiftMap.pickRandomRelic('common');
+                    $SM.addRelic(bonusRelic.id);
+                    Notifications.notify('节点深处有一块压缩的文明碎片——【' + bonusRelic.name + '】(来自：' + bonusRelic.origin + ')');
+                }
                 RiftMap.setTile(x, y, RiftMap.TILE.VOID); // Deplete
                 break;
+
             case RiftMap.TILE.ANOMALY:
-                // Trigger Combat
+                // 50% combat, 50% anomaly narrative + erosion
                 if (Math.random() > 0.5) {
                     Combat.startRandomEncounter();
                 } else {
@@ -233,10 +260,14 @@ var RiftMap = {
                 }
                 RiftMap.setTile(x, y, RiftMap.TILE.VOID); // Deplete
                 break;
+
             case RiftMap.TILE.RUIN:
-                if (Math.random() > 0.7) {
-                    Survival.addLoot('relics', 1);
-                    Notifications.notify('在废墟中发现了一个旧世界遗物。');
+                // 30% chance to find a relic
+                if (Math.random() < 0.30) {
+                    var tier = RiftMap._pickRelicTier();
+                    var relic = RiftMap.pickRandomRelic(tier);
+                    $SM.addRelic(relic.id);
+                    Notifications.notify('在废墟深处发现了文明遗物——【' + relic.name + '】\n来源：' + relic.origin);
                 } else {
                     if (typeof Narrative !== 'undefined' && Narrative.dict && Narrative.dict.mapNodes) {
                         var rc = Narrative.dict.mapNodes.ruins_city;
@@ -247,15 +278,14 @@ var RiftMap = {
                 }
                 RiftMap.setTile(x, y, RiftMap.TILE.VOID);
                 break;
+
             case RiftMap.TILE.PORTAL:
             case RiftMap.TILE.CAMP:
                 if (x === 0 && y === 0) {
-                    // At home camp
                     Notifications.notify('回到了结构节点。');
                     Survival.depositLoot();
                     $SM.set('character.hp', $SM.get('character.maxHp')); // Heal fully at camp
                 } else {
-                    // Remote portal
                     Notifications.notify('发现回城光门。已将坐标锁定回营地。');
                     RiftMap.pos = [0, 0];
                     Survival.depositLoot();
@@ -265,6 +295,103 @@ var RiftMap = {
                 break;
         }
         RiftMap.drawMap(); // redraw in case tile depleted
+    },
+
+    /**
+     * Pick a relic tier by weighted random.
+     * 'common' 70%, 'special' 28%, 'anchor' 2%
+     */
+    _pickRelicTier: function () {
+        var roll = Math.random();
+        if (roll < 0.02) return 'anchor';
+        if (roll < 0.30) return 'special';
+        return 'common';
+    },
+
+    /**
+     * Pick a random relic from Narrative.dict.relics of the given type.
+     * Falls back to 'common' if none found for the requested type.
+     */
+    pickRandomRelic: function (type) {
+        var relics = Narrative.dict.relics;
+        var pool = [];
+        for (var key in relics) {
+            if (relics[key].type === type) pool.push(relics[key]);
+        }
+        if (pool.length === 0) {
+            // Fallback: pick any common
+            for (var key in relics) {
+                if (relics[key].type === 'common') pool.push(relics[key]);
+            }
+        }
+        return pool[Math.floor(Math.random() * pool.length)];
+    },
+
+    /**
+     * Show an in-map exploration event overlay with choice buttons.
+     */
+    showExploreEvent: function (evData) {
+        // Disable map movement while event is active
+        RiftMap.active = false;
+
+        var $overlay = $('<div>').attr('id', 'map-event-overlay').addClass('map-event-overlay');
+        $('<div>').addClass('map-event-title').text(evData.title).appendTo($overlay);
+        $('<div>').addClass('map-event-text').text(evData.text).appendTo($overlay);
+
+        var $choices = $('<div>').addClass('map-event-choices').appendTo($overlay);
+
+        evData.choices.forEach(function (choice) {
+            (function (c) {
+                var $btn = new Button.Button({
+                    text: c.label,
+                    click: function () {
+                        // Parse and apply outcome: look for resource patterns [+N x] or SAN patterns
+                        RiftMap._applyEventOutcome(c.outcome);
+                        // Show outcome text then close
+                        $overlay.find('.map-event-choices').remove();
+                        $('<div>').addClass('map-event-outcome').text(c.outcome).appendTo($overlay);
+                        setTimeout(function () {
+                            $overlay.remove();
+                            RiftMap.active = true;
+                            RiftMap.drawMap();
+                        }, 3000);
+                    }
+                });
+                $choices.append($btn);
+            })(choice);
+        });
+
+        $('#map-panel').append($overlay);
+    },
+
+    /**
+     * Parse simple bracketed effects in outcome strings.
+     * Patterns: [获得 N 余烬], [SAN +N], [SAN -N], [侵蚀度 +N], [获得 N 低语值], [获得 N 灰质]
+     */
+    _applyEventOutcome: function (outcomeText) {
+        // SAN changes
+        var sanMatch = outcomeText.match(/SAN ([+-]\d+)/);
+        if (sanMatch) { $SM.add('character.san', parseInt(sanMatch[1], 10)); }
+
+        // Erosion changes
+        var eroMatch = outcomeText.match(/侵蚀度 ([+-]\d+)/);
+        if (eroMatch) { $SM.add('character.erosion', parseInt(eroMatch[1], 10)); }
+
+        // Ember gain
+        var emberGain = outcomeText.match(/获得 (\d+) 余烬/);
+        if (emberGain) { Survival.addLoot('ember', parseInt(emberGain[1], 10)); }
+
+        // Gray matter gain
+        var grayGain = outcomeText.match(/获得 (\d+) 灰质/);
+        if (grayGain) { Survival.addLoot('grayMatter', parseInt(grayGain[1], 10)); }
+
+        // Whispers gain
+        var whispersGain = outcomeText.match(/获得 (\d+) 低语值/);
+        if (whispersGain) { $SM.add('stores.whispers', parseInt(whispersGain[1], 10)); }
+
+        // Ember cost
+        var emberCost = outcomeText.match(/消耗 (\d+) 余烬/);
+        if (emberCost) { $SM.add('stores.ember', -parseInt(emberCost[1], 10)); }
     },
 
     die: function (reason) {

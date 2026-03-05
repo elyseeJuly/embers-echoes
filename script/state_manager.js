@@ -35,6 +35,7 @@ var StateManager = {
 				stores: {},
 				buildings: {},
 				workers: {},
+				relicInventory: [],
 				character: {
 					san: 50,
 					erosion: 0,
@@ -288,6 +289,37 @@ var StateManager = {
 		}
 
 		this.fireUpdate('stores');
+	},
+
+	// ── Relics ───────────────────────────────────────────────
+
+	/**
+	 * Add a relic to the player's inventory by id
+	 */
+	addRelic: function (id) {
+		var inv = this.get('relicInventory') || [];
+		inv.push(id);
+		this.set('relicInventory', inv);
+	},
+
+	/**
+	 * Check if the player holds at least one copy of a relic
+	 */
+	hasRelic: function (id) {
+		var inv = this.get('relicInventory') || [];
+		return inv.indexOf(id) !== -1;
+	},
+
+	/**
+	 * Consume (remove) one copy of a relic from inventory
+	 */
+	consumeRelic: function (id) {
+		var inv = this.get('relicInventory') || [];
+		var idx = inv.indexOf(id);
+		if (idx !== -1) {
+			inv.splice(idx, 1);
+			this.set('relicInventory', inv);
+		}
 	},
 
 	// ── Perks ────────────────────────────────────────────────

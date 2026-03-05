@@ -115,9 +115,13 @@ var Endgame = {
 
         var $choices = $('<div>').addClass('endgame-choices fade-in');
 
-        // 1. Add valid relic choices (For demo purposes, we allow clicking if we just map them dynamically)
+        // 1. Only show relic buttons the player ACTUALLY holds
+        var hasAnyValidRelic = false;
         for (var i = 0; i < q.validRelics.length; i++) {
             var relicId = q.validRelics[i];
+            if (!$SM.hasRelic(relicId)) continue; // player doesn't own it — skip
+
+            hasAnyValidRelic = true;
             var relicInfo = null;
             for (var key in Narrative.dict.relics) {
                 if (Narrative.dict.relics[key].id === relicId) relicInfo = Narrative.dict.relics[key];
@@ -127,6 +131,7 @@ var Endgame = {
                     var $btnRight = new Button.Button({
                         text: '【提交遗物: ' + rInfo.name + '】',
                         click: function () {
+                            $SM.consumeRelic(rInfo.id); // consume the relic on use
                             $('.endgame-choices').remove();
                             $container.append($('<div>').addClass('endgame-text fade-in').css('color', 'var(--glow-cyan)').text(q.successText));
                             setTimeout(function () {
@@ -135,22 +140,23 @@ var Endgame = {
                             }, 4000);
                         }
                     });
+                    $btnRight.addClass('ee-btn--primary');
                     $choices.append($btnRight);
                 })(relicInfo);
             }
         }
 
-        // 2. Add normal fallback ending choices (if they fail/don't have relics to submit)
+        // 2. Fallback: loop or trapped
         var $btnLoop = new Button.Button({
-            text: '无法回答（进入【携忆重启】）',
+            text: hasAnyValidRelic ? '放弃（进入【携忆重启】）' : '无法回答（进入【携忆重启】）',
             click: function () { Endgame.executeClimax('loop'); }
         });
-        var $btnSink = new Button.Button({
-            text: '放弃抵抗（进入【融入海洋】）',
-            click: function () { Endgame.executeClimax('sink'); }
+        var $btnTrapped = new Button.Button({
+            text: hasAnyValidRelic ? '沉默以对（永久困锁）' : '沉默以对，接受现实（永久困锁）',
+            click: function () { Endgame.executeClimax('trapped'); }
         });
 
-        $choices.append($btnLoop).append($btnSink);
+        $choices.append($btnLoop).append($btnTrapped);
         $container.append($choices);
     },
 
@@ -166,19 +172,53 @@ var Endgame = {
             $container.append($line);
             setTimeout(function () {
                 $container.append($('<div>').addClass('endgame-text fade-in').css('color', 'var(--glow-cyan)').text("系统重启中..."));
-                // Record Echo (Meta-progression increment)
-                var currentEchoes = $SM.get('game.echoes') || 0;
-
-                // We need a specific complete wipe logic here, but keeping Echoes.
-                // For now, reload page. Proper meta-progression requires a localstorage meta-save abstraction.
                 setTimeout(function () {
-                    Engine.deleteSave(); // Deletes current run save
+                    Engine.deleteSave();
                     if (typeof Echoes !== 'undefined') Echoes.addEchoes(100);
                     location.reload();
                 }, 4000);
-
             }, 3000);
+
+        } else if (choice === 'trapped') {
+            // Trapped ending — do NOT clear save, player is locked in the god's domain forever
+            if (typeof Gallery !== 'undefined') {
+                Gallery.recordEnding('END_TRAPPED', '永久困锁', '无法提交正确的答案。意识被永久封存，继续在主神空间的轮转中提取余烬。');
+            }
+            var trappedLines = [
+                "沉默。",
+                "主神的防火墙没有下达抹杀指令。",
+                "它只是...将你送回了原点。",
+                "终端重新亮起。",
+                "下一个提取周期，即将开始。"
+            ];
+            Endgame.playSequence($container, trappedLines, 0, function () {
+                $container.empty();
+                var $trapped = $('<div>').addClass('endgame-trapped');
+                $('<div>').addClass('endgame-trapped-label').text(
+                    '[ 系统记录 — 有机体 #' + Math.floor(Math.random() * 99999).toString().padStart(5, '0') + ' ]'
+                ).appendTo($trapped);
+                $('<div>').addClass('endgame-trapped-text').html(
+                    '当前任务：<span style="color:var(--ember-orange)">余烬提取 · 无限期</span><br>' +
+                    '逃脱进度：<span style="color:var(--blood-red)">0.00%</span><br>' +
+                    '下次质询时间：<span style="color:var(--ash-gray)">未知</span>'
+                ).appendTo($trapped);
+                $('<div>').addClass('endgame-trapped-hint').text(
+                    '（提示：下一次轮回中，或许可以寻找不同的遗物...）'
+                ).appendTo($trapped);
+                var $returnBtn = new Button.Button({
+                    text: '【接受现实，继续提取】',
+                    click: function () {
+                        $('#endgame-overlay').hide();
+                        $('#ee-wrapper').fadeIn(1500);
+                        Engine.GAME_OVER = false;
+                    }
+                });
+                $trapped.append($returnBtn);
+                $container.append($trapped);
+            });
+
         } else {
+            // 'sink' — permanent true end
             if (typeof Gallery !== 'undefined') {
                 Gallery.recordEnding('END_SINK', '融入海洋', '你放开了握紧的双手，让数据风暴将自己温暖地粉碎、解构。');
             }
@@ -186,7 +226,7 @@ var Endgame = {
             $container.append($line);
             setTimeout(function () {
                 $container.append($('<div>').addClass('endgame-title fade-in').text("THE END"));
-                Engine.deleteSave(); // Wipe save permanently
+                Engine.deleteSave();
             }, 4000);
         }
     }

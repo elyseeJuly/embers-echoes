@@ -182,10 +182,25 @@ var Combat = {
 
     checkVictory: function () {
         if (Combat.enemyHp <= 0) {
-            // Rewards
+            // Base ember reward
             var emberVal = 50 + Math.floor(Math.random() * 50);
             Survival.addLoot('ember', emberVal);
             Notifications.notify('实体已溃散。发现了 ' + emberVal + ' 余烬。');
+
+            // Relic drop: strong enemy (base HP >= 50) 33% chance for special relic
+            //             weak/medium enemy 15% chance for common relic
+            if (typeof Narrative !== 'undefined' && Narrative.dict && Narrative.dict.relics &&
+                typeof RiftMap !== 'undefined') {
+                var isStrong = Combat.enemyMaxHp >= 50;
+                var dropChance = isStrong ? 0.33 : 0.15;
+                if (Math.random() < dropChance) {
+                    var relicType = isStrong ? 'special' : 'common';
+                    var relic = RiftMap.pickRandomRelic(relicType);
+                    $SM.addRelic(relic.id);
+                    Notifications.notify('实体溃散时留下了一段文明残影——【' + relic.name + '】');
+                }
+            }
+
             Combat.endEncounter(true);
         }
     },

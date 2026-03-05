@@ -231,3 +231,170 @@ body.matrix-flash {
         transform: translate(0, 0);
     }
 }
+
+/* ── Relic Panel ───────────────────────────────────────────── */
+
+#relic-panel {
+    margin-top: 16px;
+}
+
+#relic-panel.visible {
+    display: block;
+}
+
+.relic-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.relic-empty {
+    color: var(--ash-gray);
+    font-size: 0.8rem;
+    font-style: italic;
+    padding: 4px 0;
+}
+
+.relic-row {
+    border: 1px solid var(--border-dim);
+    border-radius: 4px;
+    padding: 8px 10px;
+    background: var(--surface-2);
+    position: relative;
+}
+
+.relic-row-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 3px;
+}
+
+.relic-name {
+    color: var(--ash-light);
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.relic-count {
+    color: var(--glow-cyan);
+    font-size: 0.75rem;
+}
+
+.relic-origin {
+    color: var(--ash-gray);
+    font-size: 0.75rem;
+    font-style: italic;
+    margin-bottom: 4px;
+}
+
+.relic-desc {
+    color: var(--ash-dim, #666);
+    font-size: 0.78rem;
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
+
+.relic-type-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    padding: 1px 5px;
+    border-radius: 2px;
+    border: 1px solid var(--border-dim);
+    letter-spacing: 0.5px;
+}
+
+.relic-type-common { color: var(--ash-gray); border-color: var(--ash-gray); }
+.relic-type-special { color: var(--glow-cyan); border-color: var(--glow-cyan); }
+.relic-type-anchor  { color: var(--ember-orange); border-color: var(--ember-orange); text-shadow: 0 0 6px var(--ember-orange); }
+
+/* ── Map Event Overlay ─────────────────────────────────────── */
+
+.map-event-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.88);
+    border: 1px solid var(--glow-purple);
+    border-radius: 4px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    z-index: 100;
+    animation: fade-in-up 0.3s ease-out;
+}
+
+.map-event-title {
+    font-family: var(--font-terminal);
+    color: var(--glow-cyan);
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border-dim);
+    padding-bottom: 8px;
+}
+
+.map-event-text {
+    color: var(--ash-light);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.map-event-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.map-event-outcome {
+    color: var(--ash-gray);
+    font-size: 0.85rem;
+    font-style: italic;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 3px;
+}
+
+/* ── Trapped Ending ────────────────────────────────────────── */
+
+.endgame-trapped {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px;
+    border: 1px solid var(--blood-red);
+    border-radius: 6px;
+    background: rgba(180, 0, 0, 0.05);
+    max-width: 600px;
+    animation: fade-in-up 1s ease-out;
+}
+
+.endgame-trapped-label {
+    font-family: var(--font-terminal);
+    color: var(--blood-red);
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    opacity: 0.7;
+}
+
+.endgame-trapped-text {
+    font-family: var(--font-terminal);
+    color: var(--ash-light);
+    font-size: 1rem;
+    line-height: 2;
+    text-align: center;
+}
+
+.endgame-trapped-hint {
+    color: var(--ash-gray);
+    font-size: 0.8rem;
+    font-style: italic;
+    opacity: 0.6;
+}
