@@ -117,7 +117,7 @@ var Terminal = {
             var restartSeq = Terminal._NARRATIVES.restart.slice(); // copy
 
             // Check if player has Echoes (Cycle 2+)
-            if (typeof Echoes !== 'undefined' && Echoes.getEchoes() > 0) {
+            if (typeof Echoes !== 'undefined' && ($SM.get('game.echoes') || 0) > 0) {
                 if (typeof Narrative !== 'undefined' && Narrative.dict && Narrative.dict.deathEchoes && Narrative.dict.deathEchoes.rebirth_intro) {
                     var intros = Narrative.dict.deathEchoes.rebirth_intro;
                     var rb = intros[Math.floor(Math.random() * intros.length)];
@@ -265,17 +265,16 @@ var Terminal = {
             var lineHtml = lines[index];
             index++;
 
-            // Use rAF + forced reflow to guarantee CSS animation triggers
-            // on dynamically-inserted elements in all browsers
-            requestAnimationFrame(function () {
-                var $p = $('<p>').html(lineHtml);
-                // Temporarily disable animation, append, force paint, re-enable
-                $p.css({ 'animation': 'none', 'opacity': '0' });
-                $narrative.append($p);
-                void $p[0].offsetWidth; // force reflow
+            // Insert element and force reflow to ensure CSS animation triggers
+            var $p = $('<p>').html(lineHtml);
+            $p.css({ 'animation': 'none', 'opacity': '0' });
+            $narrative.append($p);
+
+            // Allow browser to process the append before animating
+            setTimeout(function () {
                 $p.css({ 'animation': '', 'opacity': '' });
                 setTimeout(showNext, 600);
-            });
+            }, 50);
         }
 
         showNext();

@@ -226,6 +226,14 @@ var Nexus = {
         if ($existing.length > 0) {
             // Update count
             $existing.find('.nexus-build-count').text(count + '/' + bld.maximum);
+            // Update cost
+            var cost = bld.cost(count);
+            var costText = Object.keys(cost).map(function (r) {
+                var name = Nexus.getResourceName(r);
+                return name + ': ' + cost[r];
+            }).join(', ');
+            $existing.find('.ee-build-cost').text(costText);
+
             // Update button state
             if (maxed) {
                 Button.setDisabled($existing.find('.ee-btn'), true);
