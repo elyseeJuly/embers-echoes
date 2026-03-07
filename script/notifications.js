@@ -16,13 +16,22 @@ var Notifications = {
 	/**
 	 * Show a notification message
 	 */
-	notify: function (text, source) {
+	notify: function (text, type) {
 		if (!text) return;
+
+		if (typeof Terminal !== 'undefined' && Terminal.pushLog) {
+			Terminal.pushLog(text, type);
+		}
+
+		var isCritical = (type === 'warning' || type === 'glitch' || type === 'critical' || type === 'milestone');
+		if (!isCritical) return; // Hide standard popups, only use terminal log
 
 		var $container = $('#ee-notifications');
 		if ($container.length === 0) return;
 
 		var $msg = $('<div>').addClass('ee-notify').text(text);
+		if (type) $msg.addClass('notify-' + type);
+
 		$container.append($msg);
 
 		// Remove old notifications if too many

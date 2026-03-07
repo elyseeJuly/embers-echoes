@@ -60,7 +60,9 @@
 }
 
 /* ── Reset & Base ──────────────────────────────────────────── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -90,13 +92,16 @@ body {
 ::-webkit-scrollbar {
   width: 4px;
 }
+
 ::-webkit-scrollbar-track {
   background: var(--void-deeper);
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--ash-dim);
   border-radius: 2px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--ember-orange);
 }
@@ -163,8 +168,27 @@ body {
   gap: var(--space-lg);
 }
 
-/* Left panel: terminal / nexus / controls */
+/* Left panel: Status */
 #ee-left {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: opacity var(--transition-slow), transform var(--transition-slow);
+  pointer-events: none;
+}
+
+#ee-left.visible {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: all;
+}
+
+/* Middle panel: Actions */
+#ee-middle {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -172,23 +196,14 @@ body {
   gap: var(--space-md);
 }
 
-/* Right panel: stores / map (appears later) */
+/* Right panel: Terminal Log */
 #ee-right {
-  width: 280px;
+  width: 320px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
-  opacity: 0;
-  transform: translateX(30px);
-  transition: opacity var(--transition-slow), transform var(--transition-slow);
-  pointer-events: none;
-}
-
-#ee-right.visible {
-  opacity: 1;
-  transform: translateX(0);
-  pointer-events: all;
+  /* Terminal log should be visible from start */
 }
 
 /* ── Panels ────────────────────────────────────────────────── */
@@ -252,7 +267,7 @@ body {
   left: 50%;
   width: 0;
   height: 0;
-  background: radial-gradient(circle, rgba(255,106,0,0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 106, 0, 0.15) 0%, transparent 70%);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   transition: width var(--transition-normal), height var(--transition-normal);
@@ -504,14 +519,19 @@ body {
 }
 
 @keyframes typewriterBlink {
-  50% { border-color: transparent; }
+  50% {
+    border-color: transparent;
+  }
 }
 
 /* ── Pulse Animation ───────────────────────────────────────── */
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(255, 106, 0, 0.2);
   }
+
   50% {
     box-shadow:
       0 0 15px rgba(255, 106, 0, 0.3),
@@ -537,10 +557,51 @@ body {
   }
 }
 
+/* ── ASCII D-Pad ────────────────────────────────────────────── */
+.map-dpad {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  text-align: center;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.map-dpad div {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.map-dpad button {
+  width: 44px;
+  height: 44px;
+  background: rgba(10, 10, 12, 0.8);
+  border: 1px solid rgba(255, 106, 0, 0.4);
+  color: var(--ash-light);
+  font-family: var(--font-terminal);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 4px;
+}
+
+.map-dpad button:hover {
+  background: rgba(255, 106, 0, 0.2);
+  color: white;
+  box-shadow: 0 0 10px rgba(255, 106, 0, 0.3);
+}
+
 /* ── Phase transition flash ────────────────────────────────── */
 .phase-flash {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: var(--ember-orange);
   z-index: var(--z-glitch);
   pointer-events: none;
@@ -548,8 +609,13 @@ body {
 }
 
 @keyframes phaseFlash {
-  0% { opacity: 0.6; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 0.6;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 /* ── Responsive ────────────────────────────────────────────── */
@@ -558,12 +624,14 @@ body {
     flex-direction: column;
   }
 
+  #ee-left,
+  #ee-middle,
   #ee-right {
     width: 100%;
     transform: translateY(20px);
   }
 
-  #ee-right.visible {
+  #ee-left.visible {
     transform: translateY(0);
   }
 

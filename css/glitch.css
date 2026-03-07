@@ -2,6 +2,24 @@
    余烬回响 — SAN-Driven Glitch Effects
    ══════════════════════════════════════════════════════════════ */
 
+/* ── Mind Break (SAN 0) ──────────────────────────────────────── */
+.mind-break-active {
+    background-color: #2a0000 !important;
+    animation: glitchShift 0.1s infinite !important;
+}
+
+.mind-break-lock {
+    pointer-events: none;
+    opacity: 0.3;
+    filter: blur(2px) sepia(100%) hue-rotate(-50deg) saturate(300%) contrast(150%);
+    transition: all var(--transition-normal);
+}
+
+.mind-break-active .ee-panel {
+    border-color: rgba(255, 0, 0, 0.5) !important;
+    box-shadow: inset 0 0 50px rgba(255, 0, 0, 0.2) !important;
+}
+
 /* ── Glitch Blood (SAN < 30 — Madness) ─────────────────────── */
 .glitch-blood {
     animation: glitchShift 0.3s infinite;

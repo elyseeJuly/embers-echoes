@@ -8,7 +8,8 @@
 }
 
 /* ── Null Phase — Total black, single button centered ──────── */
-.phase-null #terminal-panel {
+.phase-null #terminal-panel,
+.phase-transitioning #terminal-panel {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -18,7 +19,8 @@
     border-color: transparent;
 }
 
-.phase-null #terminal-panel::before {
+.phase-null #terminal-panel::before,
+.phase-transitioning #terminal-panel::before {
     display: none;
 }
 
@@ -31,40 +33,37 @@
 
 /* ── Terminal Narrative Text ───────────────────────────────── */
 #terminal-narrative {
+    padding: var(--space-lg);
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
-    margin-bottom: var(--space-md);
+    font-size: 0.9rem;
+    color: var(--ash-light);
+    min-height: 200px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
 }
 
-#terminal-narrative p {
-    font-family: var(--font-terminal);
-    font-size: 0.85rem;
+.log-yield {
     color: var(--ash-gray);
-    line-height: 1.7;
-    opacity: 0;
-    transform: translateY(5px);
-    animation: fadeInUp 0.6s ease forwards;
 }
 
-#terminal-narrative p:nth-child(1) {
-    animation-delay: 0s;
+.log-milestone {
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
 }
 
-#terminal-narrative p:nth-child(2) {
-    animation-delay: 0.3s;
+.log-warning {
+    color: var(--blood-red);
 }
 
-#terminal-narrative p:nth-child(3) {
-    animation-delay: 0.6s;
+.log-glitch {
+    color: var(--ember-deep);
+    text-shadow: 2px 0 var(--ember-orange), -2px 0 var(--blood-red);
 }
 
-#terminal-narrative p:nth-child(4) {
-    animation-delay: 0.9s;
-}
-
-#terminal-narrative p:nth-child(5) {
-    animation-delay: 1.2s;
+.log-normal {
+    color: var(--ash-light);
 }
 
 #terminal-narrative p .highlight {

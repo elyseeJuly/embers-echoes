@@ -54,7 +54,7 @@ var Terminal = {
         var $panel = $('<div>').attr('id', 'terminal-panel').addClass('ee-panel');
         $('<div>').attr('id', 'terminal-narrative').appendTo($panel);
         $('<div>').attr('id', 'spark-controls').appendTo($panel);
-        $('#ee-left').prepend($panel);
+        $('#ee-right').prepend($panel);
 
         // Subscribe to phase and state changes
         $.Dispatch('phaseChange').subscribe(Terminal.handlePhaseChange);
@@ -88,8 +88,20 @@ var Terminal = {
     },
 
     onRestart: function () {
-        // Transition to Spark phase
-        Engine.setPhase(Engine.PHASES.SPARK);
+        var $controls = $('#spark-controls');
+
+        // Lock the layout so it doesn't collapse when the class changes
+        $('body').addClass('phase-transitioning');
+
+        // Fade out the content smoothly before switching phases
+        $controls.fadeOut(500, function () {
+            // Important: Change the phase while it's hidden
+            Engine.setPhase(Engine.PHASES.SPARK);
+
+            // Remove the layout lock and reset display on controls (as it will be re-used)
+            $('body').removeClass('phase-transitioning');
+            $controls.css('display', '');
+        });
     },
 
     // ── Spark Phase ─────────────────────────────────────────

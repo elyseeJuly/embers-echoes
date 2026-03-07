@@ -23,7 +23,7 @@ var Echoes = {
 
         $('<div>').attr('id', 'echoes-list').addClass('ee-build-list').appendTo($panel);
 
-        $('#ee-left').append($panel);
+        $('#ee-middle').append($panel);
         $panel.hide();
 
         // Meta-currency is loaded manually

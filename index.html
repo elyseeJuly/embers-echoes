@@ -98,13 +98,21 @@
     <!-- Main content -->
     <div id="ee-content">
       <div id="ee-main">
-        <!-- Left panel: terminal, nexus, workers -->
+        <!-- Left panel: Status -->
         <div id="ee-left">
-          <!-- Panels are injected by modules -->
-        </div>
-
-        <!-- Right panel: stores, SAN, erosion -->
-        <div id="ee-right">
+          <div id="status-flow" class="ee-panel" style="display:none; margin-bottom: 16px">
+             <div class="ee-panel-title">净流速 (Net Flow)</div>
+             <div class="ee-stores">
+               <div class="ee-store-row">
+                 <span class="ee-store-name">余烬</span>
+                 <span class="ee-store-val" id="flow-val-ember">0/s</span>
+               </div>
+               <div class="ee-store-row">
+                 <span class="ee-store-name">灰质</span>
+                 <span class="ee-store-val" id="flow-val-matter">0/s</span>
+               </div>
+             </div>
+          </div>
           <div id="stores-panel" class="ee-panel">
             <div class="ee-panel-title">资源</div>
             <div class="ee-stores">
@@ -126,6 +134,16 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Middle panel: Actions & Main Interface -->
+        <div id="ee-middle">
+          <!-- Panels are injected by modules -->
+        </div>
+
+        <!-- Right panel: Terminal Log -->
+        <div id="ee-right">
+          <!-- Terminal is injected here -->
         </div>
       </div>
     </div>

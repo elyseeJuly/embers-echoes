@@ -28,7 +28,7 @@ var Relics = {
 
         // Always hidden until MAP phase is reached
         $panel.hide();
-        $('#ee-right').append($panel);
+        $('#ee-left').append($panel);
 
         if (Engine.getPhase() >= Engine.PHASES.MAP) Relics.show();
 

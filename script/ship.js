@@ -17,7 +17,7 @@ var Ship = {
 
 		$('<div>').attr('id', 'ship-build-list').addClass('ee-build-list').appendTo($panel);
 
-		$('#ee-left').append($panel);
+		$('#ee-middle').append($panel);
 		$panel.hide();
 
 		$.Dispatch('phaseChange').subscribe(Ship.handlePhaseChange);

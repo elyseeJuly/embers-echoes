@@ -7,6 +7,7 @@ var Survival = {
 
     // Current carried loot (temporary inventory)
     loot: {},
+    supplies: 0,
     weightLimit: 30,
 
     init: function () {
@@ -21,12 +22,15 @@ var Survival = {
 
         // Loot list
         $('<div>').attr('id', 'loot-list').appendTo($panel);
+        $('<div>').addClass('survival-pulse').appendTo($panel);
 
-        $('#ee-left').append($panel);
+        $('#ee-middle').append($panel);
 
         if (Engine.getPhase() >= Engine.PHASES.MAP) {
             Survival.show();
         }
+
+        $.Dispatch('phaseChange').subscribe(Survival.handlePhaseChange);
     },
 
     show: function () {
@@ -49,7 +53,7 @@ var Survival = {
     getCurrentWeight: function () {
         var w = 0;
         // Supply weight
-        w += ($SM.get('stores.concentrate') || 0) * 0.1;
+        w += Survival.supplies * 0.1;
 
         // Loot weight
         for (var k in Survival.loot) {
@@ -62,14 +66,12 @@ var Survival = {
     },
 
     consumeSupplies: function (amount) {
-        var current = $SM.get('stores.concentrate') || 0;
-        if (current >= amount) {
-            $SM.add('stores.concentrate', -amount);
+        if (Survival.supplies >= amount) {
+            Survival.supplies -= amount;
             return true;
         }
-        if (current > 0) {
-            // consume whatever is left
-            $SM.add('stores.concentrate', -current);
+        if (Survival.supplies > 0) {
+            Survival.supplies = 0;
         }
         return false; // Out of bounds starvation
     },
@@ -96,8 +98,13 @@ var Survival = {
                 deposited = true;
             }
         }
+        if (Survival.supplies > 0) {
+            $SM.add('stores.concentrate', Survival.supplies);
+            Survival.supplies = 0;
+            deposited = true;
+        }
         if (deposited) {
-            Notifications.notify('带回了裂隙中的资源。');
+            Notifications.notify('带回了裂隙中的资源与剩余补给。');
         }
         Survival.loot = {};
         Survival.updateView();
@@ -105,6 +112,7 @@ var Survival = {
 
     clearLoot: function () {
         Survival.loot = {};
+        Survival.supplies = 0;
         Survival.updateView();
     },
 
@@ -115,8 +123,7 @@ var Survival = {
         $('#hp-gauge').html('生命支撑系统: <span class="val" style="color:var(--erosion-green)">' + Math.max(0, hp).toFixed(1) + ' / ' + maxHp + '</span>');
 
         // Supplies Gauge
-        var supp = $SM.get('stores.concentrate') || 0;
-        $('#supplies-gauge').html('高能浓缩液: <span class="val" style="color:var(--glow-cyan)">' + Math.floor(supp) + '</span>');
+        $('#supplies-gauge').html('高能浓缩液: <span class="val" style="color:var(--glow-cyan)">' + Math.floor(Survival.supplies) + '</span>');
 
         // Weight Gauge
         var cw = Survival.getCurrentWeight();

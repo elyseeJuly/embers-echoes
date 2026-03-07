@@ -31,14 +31,68 @@ var RiftMap = {
     init: function () {
         var $panel = $('<div>').attr('id', 'map-panel').addClass('ee-panel');
         var $mapContainer = $('<div>').attr('id', 'map-viewport').appendTo($panel);
-        $('#ee-left').append($panel);
+        $('#map-events').appendTo($panel);
 
-        // Initial grid point
+        $('#ee-middle').append($panel);
+        $panel.hide();
+
+        // Event listenersetTile(0, 0, RiftMap.TILE.CAMP);
         RiftMap.setTile(0, 0, RiftMap.TILE.CAMP);
         RiftMap.visited['0,0'] = true;
 
         // Generate surrounding initial tiles
         RiftMap.generateSurroundings(0, 0);
+
+        // Keyboard WASD
+        $(document).on('keydown', function (e) {
+            if (!RiftMap.active || Engine.GAME_OVER) return;
+            switch (e.key.toLowerCase()) {
+                case 'w': RiftMap.move(0, -1); break;
+                case 'a': RiftMap.move(-1, 0); break;
+                case 's': RiftMap.move(0, 1); break;
+                case 'd': RiftMap.move(1, 0); break;
+            }
+        });
+
+        // Evacuate Button
+        var $btnEvacuate = new Button.Button({
+            id: 'btn-evacuate',
+            text: '【紧急撤离】',
+            click: function () {
+                if (RiftMap.pos[0] === 0 && RiftMap.pos[1] === 0) {
+                    Notifications.notify('已返回营地。');
+                    Survival.depositLoot();
+                    if ($('#tab-nexus').length > 0) $('#tab-nexus').click();
+                } else {
+                    if (confirm('警告：在非入口处撤离将损失50%已获取物资并受到20点精神损伤。确认撤离？')) {
+                        for (var k in Survival.loot) {
+                            Survival.loot[k] = Math.floor(Survival.loot[k] * 0.5);
+                        }
+                        $SM.add('character.san', -20);
+                        Survival.depositLoot();
+                        if ($('#tab-nexus').length > 0) $('#tab-nexus').click();
+                        Notifications.notify('强行切断连结，损失了部分物资与理智。', 'warning');
+                    }
+                }
+            }
+        });
+        $btnEvacuate.css({ 'position': 'absolute', 'top': '20px', 'right': '20px', 'zIndex': 100 }).addClass('ee-btn--danger');
+        $panel.append($btnEvacuate);
+
+        // ASCII D-Pad
+        var $dpad = $('<div>').addClass('map-dpad');
+        var $row1 = $('<div>');
+        var $row2 = $('<div>');
+        var $btnW = $('<button>').text('W').on('click', function () { RiftMap.move(0, -1) });
+        var $btnA = $('<button>').text('A').on('click', function () { RiftMap.move(-1, 0) });
+        var $btnS = $('<button>').text('S').on('click', function () { RiftMap.move(0, 1) });
+        var $btnD = $('<button>').text('D').on('click', function () { RiftMap.move(1, 0) });
+        $row1.append($btnW);
+        $row2.append($btnA, $btnS, $btnD);
+        $dpad.append($row1, $row2);
+        $panel.append($dpad);
+
+        $panel.css('position', 'relative');
 
         // Hide initially
         $panel.hide();

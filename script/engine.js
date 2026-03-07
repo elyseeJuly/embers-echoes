@@ -320,8 +320,8 @@
       }
 
       // Show/hide right panel (stores)
-      if (phase >= Engine.PHASES.SPARK) {
-        $('#ee-right').addClass('visible');
+      if (phase >= Engine.PHASES.CAMP) {
+        $('#ee-left').addClass('visible');
       }
     },
 
@@ -396,6 +396,22 @@
           var pct = cap > 0 ? Math.min(100, (val / cap) * 100) : 0;
           $row.find('.ee-store-bar-fill').css('width', pct + '%');
         }
+      }
+
+      // Update Net Flow
+      if (Engine.getPhase() >= Engine.PHASES.CAMP) {
+        $('#status-flow').show();
+        var net = $SM.getNetIncome();
+        var emberNet = net['ember'] || 0;
+        var matterNet = net['grayMatter'] || 0;
+        var emberSign = emberNet > 0 ? '+' : '';
+        var matterSign = matterNet > 0 ? '+' : '';
+        $('#flow-val-ember').text(emberSign + emberNet.toFixed(1) + '/s')
+          .css('color', emberNet < 0 ? 'var(--blood-red)' : 'var(--ember-orange)');
+        $('#flow-val-matter').text(matterSign + matterNet.toFixed(1) + '/s')
+          .css('color', matterNet < 0 ? 'var(--blood-red)' : 'var(--gray-matter)');
+      } else {
+        $('#status-flow').hide();
       }
 
       // Add tooltips to existing hard-coded SAN and ERO meters in the DOM if possible

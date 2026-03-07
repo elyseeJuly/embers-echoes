@@ -19,7 +19,7 @@ A cyberpunk/sci-fi incremental game built by transforming the A Dark Room (ADR) 
 
 ### Core Engine & Theme
 
-#### [MODIFY] [index.html](file:///Users/quantumrose/Documents/Emberois/adarkroom/index.html)
+#### [MODIFY] [index.html](file:///Users/quantumrose/Documents/Emberois/embers-echoes/index.html)
 - Rename title to "余烬回响 — Embers Echoes"
 - Update meta description & OG tags
 - Replace all `<script>` tags to point to new scripts
@@ -27,7 +27,7 @@ A cyberpunk/sci-fi incremental game built by transforming the A Dark Room (ADR) 
 - Add Google Fonts link (Inter + Fira Code)
 - Update DOM structure: `#wrapper` → `#ee-wrapper`, add `#terminal-panel`, `#nexus-panel`, `#map-panel`
 
-#### [NEW] [css/core.css](file:///Users/quantumrose/Documents/Emberois/adarkroom/css/core.css)
+#### [NEW] [css/core.css](file:///Users/quantumrose/Documents/Emberois/embers-echoes/css/core.css)
 - CSS custom properties: `--ember-orange`, `--void-black`, `--ash-gray`, `--blood-red`, `--ice-blue`, `--glow-cyan`
 - Dark cyberpunk base: `#0a0a0f` background, monospace terminal aesthetic
 - Typography: Inter for UI, Fira Code for terminal text
@@ -35,13 +35,13 @@ A cyberpunk/sci-fi incremental game built by transforming the A Dark Room (ADR) 
 - Button system: glowing borders, pulse on hover, depress on click
 - Notification system: fade-in text cascade (preserving ADR's iconic text reveal)
 
-#### [NEW] [css/glitch.css](file:///Users/quantumrose/Documents/Emberois/adarkroom/css/glitch.css)
+#### [NEW] [css/glitch.css](file:///Users/quantumrose/Documents/Emberois/embers-echoes/css/glitch.css)
 - `.glitch-blood` class: red tint, text-shadow flicker, random character displacement via CSS animation
 - `.rigid-code` class: ice-blue tint, rigid grid alignment, mechanical feel
 - `.phase-transition` class: screen-tear animation for phase unlocks
 - `.combat-shake` / `.combat-depress`: button pain feedback
 
-#### [MODIFY] [script/engine.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/engine.js)
+#### [MODIFY] [script/engine.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/engine.js)
 Complete rewrite as `Embers` namespace:
 - **Global Tick**: `setInterval` at 1000ms driving all automation
 - **Phase Manager**: enum `PHASES = { NULL, SPARK, CAMP, ABYSS, MAP, SINK, END }` with `currentPhase` tracked in state. Each phase has an `unlock()` method that reveals new UI panels
@@ -50,9 +50,9 @@ Complete rewrite as `Embers` namespace:
 - Export/import via Base64 (retain existing approach)
 - Remove: all ADR-specific perks, app-store refs, share functionality
 
-#### [MODIFY] [script/state_manager.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/state_manager.js)
+#### [MODIFY] [script/state_manager.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/state_manager.js)
 Extend existing `$SM` with:
-- **Hard-cap enforcement**: [add()](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/state_manager.js#118-140) method clamps to `getStorageCap(resourceName)`. Overflow silently discarded
+- **Hard-cap enforcement**: [add()](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/state_manager.js#118-140) method clamps to `getStorageCap(resourceName)`. Overflow silently discarded
 - **Atomic settlement**: new `settleIncome()` that validates `totalConsumption <= currentStock` before applying. If insufficient, that worker type skips this tick
 - **New state paths**: `stores.ember`, `stores.grayMatter`, `stores.whispers`, `character.san`, `character.erosion`, `character.godPressure`, `game.phase`, `game.echoes`
 
@@ -62,7 +62,7 @@ Extend existing `$SM` with:
 
 ### Terminal Module (Null → Spark)
 
-#### [NEW] [script/terminal.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/terminal.js)
+#### [NEW] [script/terminal.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/terminal.js)
 - **Null Phase**:全黑屏幕, single button `【重启神经终端】` with typewriter text reveal
 - On click → transition to Spark Phase
 - **Spark Phase**: button `【提取余烬】` with cooldown. Each click produces ember (1-3). Narrative text drips in
@@ -70,8 +70,8 @@ Extend existing `$SM` with:
 
 ### Nexus Module (Camp Phase — Base Building)
 
-#### [NEW] [script/nexus.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/nexus.js)
-Replaces [room.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/room.js). Provides:
+#### [NEW] [script/nexus.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/nexus.js)
+Replaces [room.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/room.js). Provides:
 - **Structure Nodes** (buildings): each has a name, cost, max count, and effect
   - `信号塔 (Signal Tower)`: +5 population cap per tower, max 20
   - `余烬熔炉 (Ember Furnace)`: +50 ember storage cap, max 10
@@ -81,8 +81,8 @@ Replaces [room.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script
 - Build buttons appear progressively as resources/buildings unlock
 - Each building construction triggers a narrative notification
 
-#### [NEW] [script/population.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/population.js)
-Replaces [outside.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/outside.js). Provides:
+#### [NEW] [script/population.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/population.js)
+Replaces [outside.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/outside.js). Provides:
 - **Population cap** = `信号塔 count × 5`
 - **Auto-arrival**: Lost ones (`迷失者`) join every 30-90s when pop < cap
 - **Worker assignment** (adjustable with +/- buttons):
@@ -94,7 +94,7 @@ Replaces [outside.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/scr
 
 ### Glitch Merchant
 
-#### [NEW] [script/merchant.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/merchant.js)
+#### [NEW] [script/merchant.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/merchant.js)
 - Timer: every 600s, 30% probability → spawn merchant popup
 - Stays for 60s then vanishes
 - Offers 3-4 random permanent buffs from a pool:
@@ -104,18 +104,18 @@ Replaces [outside.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/scr
   - etc.
 - Purchased buffs stored in `$SM.get('character.buffs')`
 
-#### [NEW] [css/terminal.css](file:///Users/quantumrose/Documents/Emberois/adarkroom/css/terminal.css)
+#### [NEW] [css/terminal.css](file:///Users/quantumrose/Documents/Emberois/embers-echoes/css/terminal.css)
 - Terminal panel styling: monospace text, blinking cursor, typewriter animation
 - Button glow effects for `【重启神经终端】` and `【提取余烬】`
 
-#### [NEW] [css/nexus.css](file:///Users/quantumrose/Documents/Emberois/adarkroom/css/nexus.css)
+#### [NEW] [css/nexus.css](file:///Users/quantumrose/Documents/Emberois/embers-echoes/css/nexus.css)
 - Building panel grid layout, resource bars, worker assignment UI
 
 ---
 
 ## Proposed Changes — Phase 3: Risk & Sanity (Abyss Phase)
 
-#### [NEW] [script/sanity.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/sanity.js)
+#### [NEW] [script/sanity.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/sanity.js)
 - SAN starts at 50, range [0, 100]
 - **Dynamic gating**:
   - `30-70` (Awakened): normal gameplay, golden zone
@@ -124,8 +124,8 @@ Replaces [outside.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/scr
 - SAN display: if `SAN < 70`, show vague text (`"意识模糊..."`, `"边缘在瓦解"`); if `SAN ≥ 70`, show exact number
 - Erosion: 0-100 scale. At thresholds 25/50/75/100 trigger mutation events (building destroyed, workers go mad, etc.)
 
-#### [NEW] [script/events_embers.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/events_embers.js)
-Replaces [events.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/events.js) event pools. New event structure:
+#### [NEW] [script/events_embers.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/events_embers.js)
+Replaces [events.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/events.js) event pools. New event structure:
 - Events fire based on resource levels + erosion + SAN
 - Each event presents 2 choices (dilemma): cost SAN for resources, or cost resources to stabilize
 - Example: "一个声音在低语... 献祭50余烬换取10低语值? 或消耗30灰质维持理智?"
@@ -134,8 +134,8 @@ Replaces [events.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/scri
 
 ## Proposed Changes — Phase 4: Map & Survival (Leap Phase)
 
-#### [NEW] [script/rift_map.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/rift_map.js)
-Replaces [world.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/world.js):
+#### [NEW] [script/rift_map.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/rift_map.js)
+Replaces [world.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/world.js):
 - **Sparse matrix**: only visited/adjacent tiles stored, infinite potential space
 - **Viewport**: 21×21 grid rendered around player, fog-of-war for unvisited
 - **Controls**: WASD keyboard + tap-to-move on adjacent cells (mobile)
@@ -143,49 +143,49 @@ Replaces [world.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/scrip
 - **Rift coordinate synthesis**: spend Whispers to unlock new map regions
 - **UI reveal**: first coordinate synthesized → right panel violently tears open (CSS animation)
 
-#### [NEW] [script/survival.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/survival.js)
+#### [NEW] [script/survival.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/survival.js)
 - **Supply axis**: movement costs `高能浓缩液 (Concentrate)`. If depleted → each move costs HP & SAN directly
 - **Weight axis**: fixed carry limit (base 30, upgradeable). Loot has weight. Over-weight → must drop items
 - **Death**: lose all backpack items, respawn at camp with narrative text
 
-#### [NEW] [script/combat.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/combat.js)
-Replaces combat in [events.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/events.js):
+#### [NEW] [script/combat.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/combat.js)
+Replaces combat in [events.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/events.js):
 - **ATB (Active Time Battle)**: action bar fills over time, attack when full
 - **God-Pressure scaling**: enemies gain `+godPressure%` to stats
 - **Button feedback**: CSS `.combat-shake` on hit, `.combat-depress` on click
 - Weapons: `数据刃 (Data Blade)`, `脉冲枪 (Pulse Gun)`, `逻辑炸弹 (Logic Bomb)`
 
-#### [NEW] [css/map.css](file:///Users/quantumrose/Documents/Emberois/adarkroom/css/map.css)
+#### [NEW] [css/map.css](file:///Users/quantumrose/Documents/Emberois/embers-echoes/css/map.css)
 - Grid-based map renderer, fog effect, tile styling
 - Mobile-responsive tap targets
 
-#### [NEW] [css/combat.css](file:///Users/quantumrose/Documents/Emberois/adarkroom/css/combat.css)
+#### [NEW] [css/combat.css](file:///Users/quantumrose/Documents/Emberois/embers-echoes/css/combat.css)
 - ATB bar, fighter display, shake/depress animations
 
 ---
 
 ## Proposed Changes — Phase 5: Endgame
 
-#### [NEW] [script/matrix_sink.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/matrix_sink.js)
+#### [NEW] [script/matrix_sink.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/matrix_sink.js)
 - Unlocked after exploring enough of the map
 - Player pours ember into the matrix. Progress: `0.0000%` → `100.0000%`
 - Scaling cost: each 0.0001% costs more ember than the last (logarithmic curve)
 - At 100%: unlock coordinate (0,0) on the map
 
-#### [NEW] [script/endgame.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/endgame.js)
+#### [NEW] [script/endgame.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/endgame.js)
 - Enter (0,0) → full-screen red flash, erosion +10/s
 - Three philosophy questions displayed sequentially
 - Player must drag/click the correct artifact (`携带杂音的心跳频段`) from a pile of items before erosion hits 100
 - Correct submission → logic deadlock animation → true ending sequence
 - Wrong submission or timeout → death ending → recorded in gallery
 
-#### [MODIFY] [ship.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/ship.js)
+#### [MODIFY] [ship.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/ship.js)
 - Re-theme as `裂隙方舟 (Rift Ark)` — a recovered vessel that can pierce into God Space
 - Upgrade resources changed: `alien alloy` → `灰质 (Gray Matter)` + `低语值 (Whispers)`
 - Hull/thruster upgrades → `维度护盾 (Dimensional Shield)` / `裂隙引擎 (Rift Engine)`
 - Liftoff triggers entry into God Space (Space module) as an **alternate route** to (0,0)
 
-#### [MODIFY] [space.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/space.js)
+#### [MODIFY] [space.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/space.js)
 - Re-theme as `神域穿越 (God Space Transit)` — asteroid field becomes `数据碎片流 (Data Fragment Stream)`
 - Ship dodges corruption fragments; hull damage = erosion increase
 - Successful transit → arrives at the same endgame FSM as (0,0) coordinate
@@ -196,15 +196,15 @@ Replaces combat in [events.js](file:///Users/quantumrose/Documents/Emberois/adar
 
 ## Proposed Changes — Phase 6: Meta-Progression
 
-#### [MODIFY] [script/engine.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/engine.js)
+#### [MODIFY] [script/engine.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/engine.js)
 - 10s silent autosave via `localStorage`
 - Base64 export/import (retain from ADR)
 
-#### [NEW] [script/echoes.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/echoes.js)
+#### [NEW] [script/echoes.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/echoes.js)
 - On death/completion: calculate `残响 (Echoes)` from survival time + exploration %
 - Next cycle: echoes unlock hidden starting bonuses (extra initial ember, pre-built structures, etc.)
 
-#### [NEW] [script/gallery.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/gallery.js)
+#### [NEW] [script/gallery.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/gallery.js)
 - Main menu overlay showing all achieved endings
 - Each ending has a name, description, and unlock condition
 - Stored in `localStorage` separately from active save
@@ -217,15 +217,15 @@ The following ADR files will be **deleted or emptied** as their functionality is
 
 | Original File | Replaced By | Reason |
 |---|---|---|
-| [script/room.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/room.js) | `script/nexus.js` | Buildings completely redesigned |
-| [script/outside.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/outside.js) | `script/population.js` | Workers/income redesigned |
-| [script/world.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/world.js) | `script/rift_map.js` | Map system redesigned |
-| [script/path.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/path.js) | `script/survival.js` | Outfitting/supplies redesigned |
-| [script/ship.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/ship.js) | *(modified in place)* | Re-themed as Rift Ark, alternate God Space route |
-| [script/space.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/space.js) | *(modified in place)* | Re-themed as God Space Transit minigame |
-| [script/fabricator.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/fabricator.js) | `script/nexus.js` | Absorbed into nexus |
-| [script/scoring.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/scoring.js) | `script/echoes.js` | Replaced by echoes system |
-| [script/prestige.js](file:///Users/quantumrose/Documents/Emberois/adarkroom/script/prestige.js) | `script/echoes.js` | Replaced by echoes system |
+| [script/room.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/room.js) | `script/nexus.js` | Buildings completely redesigned |
+| [script/outside.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/outside.js) | `script/population.js` | Workers/income redesigned |
+| [script/world.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/world.js) | `script/rift_map.js` | Map system redesigned |
+| [script/path.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/path.js) | `script/survival.js` | Outfitting/supplies redesigned |
+| [script/ship.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/ship.js) | *(modified in place)* | Re-themed as Rift Ark, alternate God Space route |
+| [script/space.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/space.js) | *(modified in place)* | Re-themed as God Space Transit minigame |
+| [script/fabricator.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/fabricator.js) | `script/nexus.js` | Absorbed into nexus |
+| [script/scoring.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/scoring.js) | `script/echoes.js` | Replaced by echoes system |
+| [script/prestige.js](file:///Users/quantumrose/Documents/Emberois/embers-echoes/script/prestige.js) | `script/echoes.js` | Replaced by echoes system |
 | `script/events/` dir | `script/events_embers.js` | All event pools redesigned |
 | `css/room.css` | `css/terminal.css` | Reskinned |
 | `css/outside.css` | `css/nexus.css` | Reskinned |
@@ -280,7 +280,7 @@ Since the ADR codebase has zero existing tests, verification will be **browser-b
 
 ### Phase 1+2 Verification (Initial Delivery)
 
-1. **Start dev server**: `cd /Users/quantumrose/Documents/Emberois/adarkroom && npm start`
+1. **Start dev server**: `cd /Users/quantumrose/Documents/Emberois/embers-echoes && npm start`
 2. **Browser check — Null Phase**:
    - Open `http://localhost:8080` (or assigned port)
    - Screen should be fully black with only `【重启神经终端】` button

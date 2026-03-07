@@ -75,6 +75,16 @@ var Sanity = {
             $actionsOuter.append($btnInject);
         }
 
+        // Action 3: Force Sedation (Only during Mind Break)
+        var $btnSedate = new Button.Button({
+            id: 'action-sedate',
+            text: '【强行镇静】',
+            click: function () { Sanity.actionSedate(); }
+        });
+        $btnSedate.addClass('ee-btn--danger pulse').hide();
+        $('<div>').addClass('ee-tooltip').text('【警告级别：极端】\n将理智强行拉回10以停止侵蚀爆发。\n代价：清空所有常规资源储备。').appendTo($btnSedate);
+        $actionsOuter.append($btnSedate);
+
         // Action UI update tick
         setInterval(Sanity.updateActionButtons, 1000);
     },
@@ -117,42 +127,80 @@ var Sanity = {
             background: 'white', zIndex: 9999, pointerEvents: 'none',
             opacity: 1, transition: 'opacity 0.8s ease-out'
         }).appendTo('body');
-        
-        setTimeout(function() { $overlay.css('opacity', 0); }, 50);
-        setTimeout(function() { $overlay.remove(); }, 1000);
+
+        setTimeout(function () { $overlay.css('opacity', 0); }, 50);
+        setTimeout(function () { $overlay.remove(); }, 1000);
 
         Sanity._injectCooldown = 120;
         Sanity.updateActionButtons();
     },
 
+    actionSedate: function () {
+        var san = $SM.get('character.san') || 0;
+        if (san > 0) return; // Only allow if SAN is 0 or less
+
+        // Huge cost implementation
+        $SM.set('stores.ember', 0);
+        $SM.set('stores.grayMatter', 0);
+        $SM.set('stores.concentrate', 0);
+
+        $SM.set('character.san', 10); // Reset SAN to 10
+
+        Notifications.notify('强行镇静生效。心智的防线被勉强拼凑，但你失去了所有的常规物资产出。', 'critical');
+
+        var $overlay = $('<div>').css({
+            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'black', zIndex: 9999, pointerEvents: 'none',
+            opacity: 1, transition: 'opacity 3.0s ease-out'
+        }).appendTo('body');
+
+        setTimeout(function () { $overlay.css('opacity', 0); }, 50);
+        setTimeout(function () { $overlay.remove(); }, 3000);
+
+        Sanity.updateVisuals();
+        Sanity.updateActionButtons();
+    },
+
     updateActionButtons: function () {
+        var zone = Sanity.getZone();
         var $btnGaze = $('#action-gaze');
-        if ($btnGaze.length > 0) {
-            if (Sanity._gazeCooldown > 0) {
-                Sanity._gazeCooldown--;
-                Button.setDisabled($btnGaze, true);
-                $btnGaze.find('span').text('【冷却中 ' + Sanity._gazeCooldown + 's】');
-            } else {
-                var san = $SM.get('character.san') || 50;
-                if (san < 5) {
+        var $btnInject = $('#action-inject');
+        var $btnSedate = $('#action-sedate');
+
+        if (zone === 'mindbreak') {
+            if ($btnGaze.length > 0) $btnGaze.hide();
+            if ($btnInject.length > 0) $btnInject.hide();
+            if ($btnSedate.length > 0) $btnSedate.show();
+        } else {
+            if ($btnSedate.length > 0) $btnSedate.hide();
+            if ($btnGaze.length > 0) {
+                $btnGaze.show();
+                if (Sanity._gazeCooldown > 0) {
+                    Sanity._gazeCooldown--;
                     Button.setDisabled($btnGaze, true);
-                    $btnGaze.find('span').text('【无法承受深渊】');
+                    $btnGaze.find('span').text('【冷却中 ' + Sanity._gazeCooldown + 's】');
                 } else {
-                    Button.setDisabled($btnGaze, false);
-                    $btnGaze.find('span').text('【直视深渊】');
+                    var san = $SM.get('character.san') || 50;
+                    if (san < 5) {
+                        Button.setDisabled($btnGaze, true);
+                        $btnGaze.find('span').text('【无法承受深渊】');
+                    } else {
+                        Button.setDisabled($btnGaze, false);
+                        $btnGaze.find('span').text('【直视深渊】');
+                    }
                 }
             }
-        }
 
-        var $btnInject = $('#action-inject');
-        if ($btnInject.length > 0) {
-            if (Sanity._injectCooldown > 0) {
-                Sanity._injectCooldown--;
-                Button.setDisabled($btnInject, true);
-                $btnInject.find('span').text('【冷却中 ' + Sanity._injectCooldown + 's】');
-            } else {
-                Button.setDisabled($btnInject, false);
-                $btnInject.find('span').text('【注射抑制剂】');
+            if ($btnInject.length > 0) {
+                $btnInject.show();
+                if (Sanity._injectCooldown > 0) {
+                    Sanity._injectCooldown--;
+                    Button.setDisabled($btnInject, true);
+                    $btnInject.find('span').text('【冷却中 ' + Sanity._injectCooldown + 's】');
+                } else {
+                    Button.setDisabled($btnInject, false);
+                    $btnInject.find('span').text('【注射抑制剂】');
+                }
             }
         }
     },
@@ -173,6 +221,11 @@ var Sanity = {
             var erosionRate = 0.5;
             if ($SM.hasPerk('entropy_resist')) { erosionRate *= 0.75; }
             $SM.add('character.erosion', erosionRate, true);
+
+        } else if (zone === 'mindbreak') {
+            // MINDBREAK (SAN 0) - severe punishment
+            $SM.add('character.erosion', 5, true);
+            if (Math.random() < 0.2) Notifications.notify('【理智崩溃】侵蚀正在暴走！立即使用强制镇静！', 'glitch');
 
         } else if (zone === 'assimilation') {
             // ASSIMILATION (SAN > maxSan - 30) - super productivity (handled in state_manager collectIncome)
@@ -215,6 +268,7 @@ var Sanity = {
         if (san === undefined) san = $SM.get('character.san') || 50;
         if (maxSan === undefined) maxSan = $SM.get('character.maxSan') || 100;
 
+        if (san <= 0) return 'mindbreak';
         if (san < Sanity.MADNESS_THRESHOLD) return 'madness';
         if (san > (maxSan - 30)) return 'assimilation';
         return 'awakened';
@@ -227,6 +281,8 @@ var Sanity = {
             Notifications.notify('理智过载。系统进入超频状态，但能量急剧消耗。');
         } else if (to === 'awakened') {
             Notifications.notify('意识回到了边缘地带。清醒，但脆弱。');
+        } else if (to === 'mindbreak') {
+            Notifications.notify('【理智崩溃】心智防线彻底瓦解！侵蚀正在暴走！', 'critical');
         }
     },
 
@@ -239,9 +295,13 @@ var Sanity = {
         var maxSan = $SM.get('character.maxSan') || 100;
         var zone = Sanity.getZone(san, maxSan);
 
-        $body.removeClass('glitch-blood rigid-code');
+        $body.removeClass('glitch-blood rigid-code mind-break-active');
+        $('#ee-middle').removeClass('mind-break-lock');
 
-        if (zone === 'madness') {
+        if (zone === 'mindbreak') {
+            $body.addClass('mind-break-active');
+            $('#ee-middle').addClass('mind-break-lock');
+        } else if (zone === 'madness') {
             $body.addClass('glitch-blood');
         } else if (zone === 'assimilation') {
             $body.addClass('rigid-code');

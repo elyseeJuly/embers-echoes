@@ -17,7 +17,7 @@ var Gallery = {
 
         $('<div>').attr('id', 'gallery-list').addClass('ee-build-list').appendTo($panel);
 
-        $('#ee-left').append($panel);
+        $('#ee-middle').append($panel);
         $panel.hide();
 
         Gallery.loadGallery();

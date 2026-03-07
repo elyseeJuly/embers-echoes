@@ -47,7 +47,16 @@ var MatrixSink = {
         $btnRelic.addClass('matrix-btn');
         $controls.append($btnRelic);
 
-        $('#ee-left').append($panel);
+        // Stabilize Anchor Button
+        var $btnStabilize = new Button.Button({
+            id: 'btn-matrix-stabilize',
+            text: '【稳定锚点】',
+            click: function () { MatrixSink.stabilizeAnchor(); }
+        });
+        $btnStabilize.addClass('ee-btn--danger pulse').hide();
+        $controls.append($btnStabilize);
+
+        $('#ee-middle').append($panel);
         $panel.hide();
 
         $.Dispatch('phaseChange').subscribe(MatrixSink.handlePhaseChange);
@@ -75,6 +84,15 @@ var MatrixSink = {
     },
 
     submitResources: function () {
+        var phase = $SM.get('game.matrixPhase') || 0;
+        var capWork = ((phase + 1) * 25 / 100) * MatrixSink.TOTAL_WORK_REQUIRED;
+        var currentWork = $SM.get('game.matrixProgress') || 0;
+
+        if (currentWork >= capWork && phase < 4) {
+            Notifications.notify('当前阶段已达满负荷。需建立稳定锚点。');
+            return;
+        }
+
         // Calculate work value of all current resources
         var work = 0;
 
@@ -99,18 +117,30 @@ var MatrixSink = {
             return;
         }
 
-        // Add to matrix progress
-        var currentWork = $SM.get('game.matrixProgress') || 0;
+        if (currentWork + work > capWork) {
+            work = capWork - currentWork;
+            Notifications.notify('部分庞大的因果算力因超载而溢散。');
+        }
+
         $SM.set('game.matrixProgress', currentWork + work);
 
         $SM.fireUpdate('stores'); // trigger store UI update
-        Notifications.notify('注入了等效于 ' + Math.floor(work) + ' 计算力的资源。');
+        Notifications.notify('注入了等效于 ' + Math.floor(work) + ' 计算力的常规资源。');
 
         MatrixSink.checkCompletion();
         MatrixSink.updateView();
     },
 
     submitRelic: function () {
+        var phase = $SM.get('game.matrixPhase') || 0;
+        var capWork = ((phase + 1) * 25 / 100) * MatrixSink.TOTAL_WORK_REQUIRED;
+        var currentWork = $SM.get('game.matrixProgress') || 0;
+
+        if (currentWork >= capWork && phase < 4) {
+            Notifications.notify('当前阶段已达满负荷。虚空拒绝了你的遗物。');
+            return;
+        }
+
         var relics = $SM.get('stores.relics') || 0;
         if (relics <= 0) {
             Notifications.notify('没有旧世遗物。');
@@ -120,7 +150,10 @@ var MatrixSink = {
         $SM.add('stores.relics', -1);
 
         var work = 10000; // Large chunk
-        var currentWork = $SM.get('game.matrixProgress') || 0;
+        if (currentWork + work > capWork) {
+            work = capWork - currentWork;
+        }
+
         $SM.set('game.matrixProgress', currentWork + work);
 
         Notifications.notify('遗物熔毁... 矩阵爆发出强烈的共振。');
@@ -136,22 +169,65 @@ var MatrixSink = {
     checkCompletion: function () {
         var work = $SM.get('game.matrixProgress') || 0;
         if (work >= MatrixSink.TOTAL_WORK_REQUIRED) {
-            // Trigger Endgame
+            Notifications.notify('因果逆转。回响已闭环。', 'milestone');
             Engine.setPhase(Engine.PHASES.END);
         }
     },
 
     updateView: function () {
         var work = $SM.get('game.matrixProgress') || 0;
-        var pct = Math.min(100, (work / MatrixSink.TOTAL_WORK_REQUIRED) * 100);
+        var phase = $SM.get('game.matrixPhase') || 0;
+        var capPct = (phase + 1) * 25;
+        var capWork = (capPct / 100) * MatrixSink.TOTAL_WORK_REQUIRED;
+
+        var displayWork = Math.min(work, capWork);
+        var pct = Math.min(100, (displayWork / MatrixSink.TOTAL_WORK_REQUIRED) * 100);
 
         $('#matrix-progress-fill').css('width', pct + '%');
         $('#matrix-progress-text').text(pct.toFixed(4) + '%');
+
+        if (work >= capWork && phase < 4) {
+            $('.matrix-btn').hide();
+            var popCost = (phase + 1) * 10;
+            $('#btn-matrix-stabilize').show().find('span').text('【稳定锚点 (消耗 ' + popCost + ' 人口)】');
+        } else {
+            $('.matrix-btn').show();
+            $('#btn-matrix-stabilize').hide();
+        }
 
         // Intensive glitch effect when nearing completion
         if (pct > 90) {
             $('#matrix-display').addClass('critical-glitch');
         }
+    },
+
+    stabilizeAnchor: function () {
+        var phase = $SM.get('game.matrixPhase') || 0;
+        if (phase >= 4) return;
+
+        var popCost = (phase + 1) * 10;
+        if (Population.getCurrentPopulation() < popCost) {
+            Notifications.notify('人口不足，无法建立逆向锚点。需要至少 ' + popCost + ' 名先驱者。');
+            return;
+        }
+
+        // Deduct population
+        var removed = 0;
+        var keys = ['wanderer', 'scavenger', 'lurker', 'sentinel', 'chemist'];
+        while (removed < popCost) {
+            var k = keys[Math.floor(Math.random() * keys.length)];
+            var c = $SM.get('workers.' + k) || 0;
+            if (c > 0) {
+                $SM.set('workers.' + k, c - 1);
+                removed++;
+            }
+        }
+
+        $SM.set('game.matrixPhase', phase + 1);
+        Notifications.notify('锚点稳固。' + popCost + ' 名先驱者成为了时代的基石。', 'milestone');
+
+        MatrixSink.updateView();
+        if (typeof Population !== 'undefined') Population.updateView();
     },
 
     handlePhaseChange: function (e) {

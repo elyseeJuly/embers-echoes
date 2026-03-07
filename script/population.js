@@ -66,8 +66,8 @@ var Population = {
 
     // Auto-arrival timer
     _popTimer: null,
-    _POP_DELAY_MIN: 30, // seconds
-    _POP_DELAY_MAX: 90, // seconds
+    _POP_DELAY_MIN: 15, // seconds (Pity System)
+    _POP_DELAY_MAX: 30, // seconds
 
     init: function () {
         // Create worker panel
@@ -76,8 +76,15 @@ var Population = {
         $('<div>').addClass('worker-summary').appendTo($panel);
         $('<div>').attr('id', 'worker-list').appendTo($panel);
         $('<div>').addClass('income-display').appendTo($panel);
-        $('#ee-left').append($panel);
+        $('#ee-middle').append($panel);
 
+        var $btnBroadcast = $('<button>').attr('id', 'btn-pop-broadcast').addClass('ee-btn').text('高频广播 (50 余烬)').css({ 'margin-top': 'var(--space-md)', 'width': '100%' });
+        $btnBroadcast.on('click', Population.actionBroadcast);
+        $panel.append($btnBroadcast);
+
+        $panel.hide(); // Hidden until phase 2 (Camp)
+
+        // Add to navigation header explicitly when phase hits Camp
         // Register incomes with state manager
         for (var key in Population._WORKERS) {
             var w = Population._WORKERS[key];
@@ -155,6 +162,46 @@ var Population = {
 
         Notifications.notify('一个迷失者从废墟中摸索而来。');
         Population.updateView();
+    },
+
+    // ── High-Frequency Broadcast ────────────────────────────
+
+    actionBroadcast: function () {
+        var embers = $SM.get('stores.ember') || 0;
+        if (embers < 50) {
+            Notifications.notify('余烬不足，无法启动高频广播。');
+            return;
+        }
+
+        if (Population.getCurrentPopulation() >= Population.getMaxPopulation()) {
+            Notifications.notify('人口已满，没有多余的信号频段容纳新的游荡者。');
+            return;
+        }
+
+        $SM.add('stores.ember', -50, true);
+
+        // Reset pity timer
+        if (Population._popTimer) {
+            clearTimeout(Population._popTimer);
+            Population.scheduleNextArrival();
+        }
+
+        // 20% negative event
+        if (Math.random() < 0.2) {
+            if (Math.random() < 0.5) {
+                var san = $SM.get('character.san') || 50;
+                $SM.set('character.san', Math.max(0, san - 10));
+                Notifications.notify('广播引来了空间风暴……理智受到剧烈冲击！', 'glitch');
+            } else {
+                var gray = $SM.get('stores.grayMatter') || 0;
+                $SM.set('stores.grayMatter', Math.max(0, gray - 5));
+                Notifications.notify('未知的逆流冲刷了营地，部分灰质被侵蚀殆尽。', 'warning');
+            }
+        } else {
+            Notifications.notify('广播穿透了虚空，成功定位到了新的迷失者。', 'milestone');
+        }
+
+        Population.arrivedLostOne();
     },
 
     // ── Worker Assignment ───────────────────────────────────
@@ -235,8 +282,18 @@ var Population = {
             var $row = $('#worker-' + key);
 
             if ($row.length === 0) {
+                var yields = [];
+                if (w.stores) {
+                    for (var r in w.stores) {
+                        var n = (r === 'ember') ? '余烬' : (r === 'grayMatter') ? '灰质' : (r === 'concentrate') ? '浓缩液' : (r === 'whispers') ? '低语值' : r;
+                        var v = w.stores[r];
+                        yields.push((v > 0 ? '+' : '') + v + ' ' + n + '/s');
+                    }
+                }
+                var yieldText = yields.length > 0 ? ' [ ' + yields.join(', ') + ' ]' : '';
+
                 $row = $('<div>').attr('id', 'worker-' + key).addClass('ee-worker-row fade-in');
-                $('<span>').addClass('ee-worker-name').text(w.name).attr('title', w.desc).appendTo($row);
+                $('<span>').addClass('ee-worker-name').text(w.name + yieldText).attr('title', w.desc).appendTo($row);
                 $('<span>').addClass('ee-worker-count').text(count).appendTo($row);
 
                 var $controls = $('<div>').addClass('ee-worker-controls');

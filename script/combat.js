@@ -58,7 +58,7 @@ var Combat = {
             })(weapon);
         }
 
-        $('#ee-left').append($panel);
+        $('#ee-middle').append($panel);
         $panel.hide();
     },
 

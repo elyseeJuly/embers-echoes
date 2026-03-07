@@ -134,7 +134,48 @@ var Nexus = {
         var $panel = $('<div>').attr('id', 'nexus-panel').addClass('ee-panel');
         $('<div>').addClass('ee-panel-title').text('结构节点').appendTo($panel);
         $('<div>').attr('id', 'nexus-build-list').addClass('ee-build-list').appendTo($panel);
-        $('#ee-left').append($panel);
+
+        // Deploy Button
+        var $btnDeploy = new Button.Button({
+            id: 'action-deploy',
+            text: '【解析坐标 (Deploy)】',
+            click: function () {
+                var phase = Engine.getPhase();
+                if (phase < Engine.PHASES.MAP) {
+                    Notifications.notify('裂隙网络尚未全面开启，无法部署。');
+                    return;
+                }
+                var baseConc = $SM.get('stores.concentrate') || 0;
+                if (baseConc <= 0) {
+                    Notifications.notify('缺乏高能浓缩液，无法维持裂隙潜行的生命特征。');
+                    return;
+                }
+
+                var input = prompt('输入携带的高能浓缩液数量 (最大储备: ' + Math.floor(baseConc) + '):', Math.min(10, Math.floor(baseConc)));
+                if (input === null) return; // cancelled
+
+                var amount = parseInt(input, 10);
+                if (isNaN(amount) || amount <= 0) return;
+                if (amount > baseConc) amount = baseConc;
+
+                // Execute deploy
+                $SM.add('stores.concentrate', -amount);
+                Survival.supplies = amount;
+
+                // Go to Map Panel
+                if ($('#tab-rift_map').length > 0) {
+                    $('#tab-rift_map').click();
+                } else {
+                    Engine.switchTab('rift_map');
+                }
+                Notifications.notify('坐标锁定，裂隙潜行开始。携带浓缩液: ' + amount);
+            }
+        });
+        $btnDeploy.addClass('ee-btn--primary').css({ 'width': '100%', 'marginTop': '15px' });
+        $panel.append($btnDeploy);
+
+        $('#ee-middle').append($panel);
+        $panel.hide();
 
         // Show if phase is CAMP or higher
         if (Engine.getPhase() >= Engine.PHASES.CAMP) {
