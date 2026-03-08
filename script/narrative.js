@@ -236,12 +236,12 @@ Narrative.dict.fragments = {
 // 合成配方 (Crafting Recipes)
 // ---------------------------------------------------------
 Narrative.dict.craftingRecipes = [
-    { relicId:'relic_cyber',   name:'陷入死循环的图灵核心', fragments:['frag_turing'],   costs:{ember:5000, anomalies:100},             craftText:'运算符咬合。某个悲剧的终点被激活。' },
-    { relicId:'relic_bio',     name:'不死的干细胞增生',     fragments:['frag_biotech'],  costs:{ember:3000, grayMatter:80},             craftText:'晶体中的呻吟声安静了。遗物成型。' },
-    { relicId:'relic_magic',   name:'被降维的奥术卷轴',     fragments:['frag_scroll'],   costs:{ember:4000, whispers:30},               craftText:'卷轴展开，你看到的不是文字，而是公式的蒸发。' },
-    { relicId:'relic_fractal', name:'无内侧克莱因瓶',       fragments:['frag_klein'],    costs:{ember:6000, concentrate:20},            craftText:'几何体重新组合。你感到短暂的失明。' },
-    { relicId:'relic_time',    name:'逆旋怀表',             fragments:['frag_watch'],    costs:{ember:5000, grayMatter:50, whispers:20}, craftText:'时间指针安静下来。某段永恒终结了。' },
-    { relicId:'relic_carbon',  name:'携带杂音的心跳频段',   fragments:['frag_recorder'], costs:{ember:2000, whispers:50},
+    { relicId:'relic_cyber',   name:'陷入死循环的图灵核心', fragments:['frag_turing'],   costs:{ember:450, anomalies:250},             craftText:'运算符咬合。某个悲剧的终点被激活。' },
+    { relicId:'relic_bio',     name:'不死的干细胞增生',     fragments:['frag_biotech'],  costs:{ember:400, grayMatter:150},             craftText:'晶体中的呻吟声安静了。遗物成型。' },
+    { relicId:'relic_magic',   name:'被降维的奥术卷轴',     fragments:['frag_scroll'],   costs:{ember:480, whispers:35},               craftText:'卷轴展开，你看到的不是文字，而是公式的蒸发。' },
+    { relicId:'relic_fractal', name:'无内侧克莱因瓶',       fragments:['frag_klein'],    costs:{ember:500, concentrate:8},            craftText:'几何体重新组合。你感到短暂的失明。' },
+    { relicId:'relic_time',    name:'逆旋怀表',             fragments:['frag_watch'],    costs:{ember:550, grayMatter:120, whispers:40}, craftText:'时间指针安静下来。某段永恒终结了。' },
+    { relicId:'relic_carbon',  name:'携带杂音的心跳频段',   fragments:['frag_recorder'], costs:{ember:600, whispers:50},
       sacrificeWanderers:10,
       craftText:'心跳声响起。你做了一件不可撤回的事。但杂音贯穿了解译器的每一块晶格——这是系统无法读取的频率。',
       sacrificeText:'解译器需要生命共鸣作为载频。10名游荡者将被献祭，其脑电波将永久编码进这段频段。'
