@@ -44,7 +44,15 @@
 
 ---
 
-### 4. 📈 活动执行与阶段交付 (Executions — `EXEC_`)
+### 4. 📜 历史编年史与归档 (Histories — `HIST_`)
+承载开发日志大编年史、README 演进历史、Git 提交流水账、legacy 历史备忘录等静态归档。
+
+*   **[HIST_20260304_ADR_CLEANUP_AND_BRAND_TRANSITION.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/HIST_20260304_ADR_CLEANUP_AND_BRAND_TRANSITION.md)**
+    *   *说明*：ADR 遗留清理与品牌重构历史编年史。完整记录 2026-03-04 期间进行的大规模死代码清理与新项目元数据/汉化警告页面的品牌独立转换。
+
+---
+
+### 5. 📈 活动执行与阶段交付 (Executions — `EXEC_`)
 承载开发任务拆解、方案计划书、 Walkthrough 交付汇报历史。
 
 *   *暂无历史执行文档，后续补充。*
