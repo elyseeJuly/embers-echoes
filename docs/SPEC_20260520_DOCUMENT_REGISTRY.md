@@ -53,7 +53,7 @@
     *   *说明*：全局系统热修复与环境状态播报开发历史归档。完整记录 2026-03-06 与 2026-03-07 期间实现的环境状态叙事广播系统、神经终端重启空白崩溃热修复、Nexus 基地建筑造价动态刷新以及 Favicon 品牌化资产升级。
 *   **[HIST_20260308_FUNCTIONAL_DESIGN_REFINEMENTS_AND_HOTFIX.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/HIST_20260308_FUNCTIONAL_DESIGN_REFINEMENTS_AND_HOTFIX.md)**
     *   *说明*：核心体验功能精细化重构与主板消失时序热修复历史编年史。完整记录 2026-03-07 至 2026-03-08 期间实施的六大设计痛点深度重构，以及彻底攻克理智上限死锁 40 与营地/工人管理面板刷新空白消失的重大崩溃时序热修复。
-*   **[HIST_20260527_HOTFIX_V1_1_AND_RELIC_REBALANCE.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/HIST_20260527_HOTFIX_V1_1_AND_RELIC_REBALANCE.md)**
+*   **[HIST_20260308_HOTFIX_V1_1_AND_RELIC_REBALANCE.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/HIST_20260308_HOTFIX_V1_1_AND_RELIC_REBALANCE.md)**
     *   *说明*：系统数值死锁热更新与文明遗物平衡历史编年史。完整记录 2026-03-05 至 2026-03-08 期间进行的 Hotfix V1.1 版本部署（含理智上限动态 Clamp、高阶碎片 Smart Loot）及终局文明遗物合成成本的大规模重组优化，彻底解决系统卡死问题。
 
 ---

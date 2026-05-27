@@ -2,7 +2,7 @@
 
 > **文档分类**: `HIST` (Histories - 历史编年史与归档)  
 > **版本号**: V1.0.0  
-> **生效日期**: 2026-05-27  
+> **生效日期**: 2026-03-08  
 > **基于会话**: 2026-03-05 至 2026-03-08 数值修复与死锁热更新会话  
 > **适用对象**: 所有项目开发、AI 协同智能体、独立工程师与版本归档  
 > **全局规范参考**: [SPEC_20260520_GLOBAL_DEVELOPMENT_STANDARDS.md](file:///Users/quantumrose/Documents/Emberois/SPEC_20260520_GLOBAL_DEVELOPMENT_STANDARDS.md)
