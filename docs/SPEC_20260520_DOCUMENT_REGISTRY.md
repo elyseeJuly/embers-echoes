@@ -49,6 +49,8 @@
 
 *   **[HIST_20260304_ADR_CLEANUP_AND_BRAND_TRANSITION.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/HIST_20260304_ADR_CLEANUP_AND_BRAND_TRANSITION.md)**
     *   *说明*：ADR 遗留清理与品牌重构历史编年史。完整记录 2026-03-04 期间进行的大规模死代码清理与新项目元数据/汉化警告页面的品牌独立转换。
+*   **[HIST_20260527_HOTFIX_V1_1_AND_RELIC_REBALANCE.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/HIST_20260527_HOTFIX_V1_1_AND_RELIC_REBALANCE.md)**
+    *   *说明*：系统数值死锁热更新与文明遗物平衡历史编年史。完整记录 2026-03-05 至 2026-03-08 期间进行的 Hotfix V1.1 版本部署（含理智上限动态 Clamp、高阶碎片 Smart Loot）及终局文明遗物合成成本的大规模重组优化，彻底解决系统卡死问题。
 
 ---
 
