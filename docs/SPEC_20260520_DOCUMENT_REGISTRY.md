@@ -20,6 +20,14 @@
 ### 1. ⚙️ 规格说明与设计系统 (Specifications — `SPEC_`)
 主要承载核心架构、UI 设计准则、系统规格说明以及技术交接。
 
+*   **[SPEC_20260304_ZONE_COMBAT_BALANCE.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/SPEC_20260304_ZONE_COMBAT_BALANCE.md)**
+    *   *说明*：大地图探索区域战斗数值平衡规格说明。以营地 (0,0) 为圆心，规定了不同半径（<10, <20, <30）下的怪物 DPS、生命值与玩家预期 DPS、生命值的难度阶梯与数值门限。
+*   **[SPEC_20260304_GAME_EVENTS.xlsx](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/SPEC_20260304_GAME_EVENTS.xlsx)**
+    *   *说明*：核心游戏遭遇事件列表。包含游戏内所有大地图节点和营地内可触发的文本/战斗抉择事件总表。
+*   **[SPEC_20260305_CORE_SYSTEM_DESIGN.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/SPEC_20260305_CORE_SYSTEM_DESIGN.md)**
+    *   *说明*：核心系统设计白皮书 (Master GDD V2.0)。详细定义了零维至终局的渐进式心流、防膨胀仓储天花板、理智/侵蚀状态机、大地图考古博弈、逆向运算矩阵与三重终局结局树等设计核心机制。
+*   **[SPEC_20260305_RELIC_EXPLORATION_DESIGN.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/SPEC_20260305_RELIC_EXPLORATION_DESIGN.md)**
+    *   *说明*：大地图探索与遗物解译系统设计规格说明 (Master GDD V2.0 附加卷)。详细规划了基础资源、中继AVG事件、深渊遗迹三级探索节点生成，以及概念解译器重构配方、限时高压质询答题与结局检索逻辑。
 *   **[SPEC_20260306_CORE_IMPLEMENTATION_PLAN.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/SPEC_20260306_CORE_IMPLEMENTATION_PLAN.md)**
     *   *说明*：核心重构与系统设计实施方案。详细规划了从《小黑屋 (A Dark Room)》 codebase 演进到《余烬回响》的 6 个系统阶段（Null/Spark, Camp, Abyss, Leap, Endgame, Meta-Progression）。
 
@@ -49,6 +57,8 @@
 
 *   **[HIST_20260304_ADR_CLEANUP_AND_BRAND_TRANSITION.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/HIST_20260304_ADR_CLEANUP_AND_BRAND_TRANSITION.md)**
     *   *说明*：ADR 遗留清理与品牌重构历史编年史。完整记录 2026-03-04 期间进行的大规模死代码清理与新项目元数据/汉化警告页面的品牌独立转换。
+*   **[HIST_20260304_REBRANDING_AND_NARRATIVE_CHRONICLE.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/HIST_20260304_REBRANDING_AND_NARRATIVE_CHRONICLE.md)**
+    *   *说明*：叙事重塑与品牌重构历史编年史。完整记录 2026-03-04 期间进行的大地图虚空移动格阻塞修正、血量归零后 Permadeath 机制接线、环境与资源幽灵图鉴叙事扩展，以及项目正式更名为 embers-echoes 并迁移 GitHub origin 的重大历程。
 *   **[HIST_20260307_SYSTEM_HOTFIX_AND_AMBIENT_INTEGRATION.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/HIST_20260307_SYSTEM_HOTFIX_AND_AMBIENT_INTEGRATION.md)**
     *   *说明*：全局系统热修复与环境状态播报开发历史归档。完整记录 2026-03-06 与 2026-03-07 期间实现的环境状态叙事广播系统、神经终端重启空白崩溃热修复、Nexus 基地建筑造价动态刷新以及 Favicon 品牌化资产升级。
 *   **[HIST_20260308_FUNCTIONAL_DESIGN_REFINEMENTS_AND_HOTFIX.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/HIST_20260308_FUNCTIONAL_DESIGN_REFINEMENTS_AND_HOTFIX.md)**
