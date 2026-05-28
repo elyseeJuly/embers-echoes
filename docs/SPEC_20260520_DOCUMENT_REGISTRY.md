@@ -65,6 +65,8 @@
     *   *说明*：核心体验功能精细化重构与主板消失时序热修复历史编年史。完整记录 2026-03-07 至 2026-03-08 期间实施的六大设计痛点深度重构，以及彻底攻克理智上限死锁 40 与营地/工人管理面板刷新空白消失的重大崩溃时序热修复。
 *   **[HIST_20260308_HOTFIX_V1_1_AND_RELIC_REBALANCE.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/HIST_20260308_HOTFIX_V1_1_AND_RELIC_REBALANCE.md)**
     *   *说明*：系统数值死锁热更新与文明遗物平衡历史编年史。完整记录 2026-03-05 至 2026-03-08 期间进行的 Hotfix V1.1 版本部署（含理智上限动态 Clamp、高阶碎片 Smart Loot）及终局文明遗物合成成本的大规模重组优化，彻底解决系统卡死问题。
+*   **[HIST_20260528_DOCUMENTATION_REORGANIZATION_AND_CLEANUP.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/HIST_20260528_DOCUMENTATION_REORGANIZATION_AND_CLEANUP.md)**
+    *   *说明*：本地文档规范化重组与全局清理编年史。完整记录 2026-05-28 期间进行的 `doc/` 与 `docs/` 合并重构，大地图平衡矩阵与游戏设计白皮书高保真 Markdown 规范化转换，以及全局 `adarkroom` 废弃软链接物理清理与 GitHub 双端同步的重大历程。
 
 ---
 
