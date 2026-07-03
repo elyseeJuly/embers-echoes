@@ -28,8 +28,6 @@
     *   *说明*：核心系统设计白皮书 (Master GDD V2.0)。详细定义了零维至终局的渐进式心流、防膨胀仓储天花板、理智/侵蚀状态机、大地图考古博弈、逆向运算矩阵与三重终局结局树等设计核心机制。
 *   **[SPEC_20260305_RELIC_EXPLORATION_DESIGN.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/SPEC_20260305_RELIC_EXPLORATION_DESIGN.md)**
     *   *说明*：大地图探索与遗物解译系统设计规格说明 (Master GDD V2.0 附加卷)。详细规划了基础资源、中继AVG事件、深渊遗迹三级探索节点生成，以及概念解译器重构配方、限时高压质询答题与结局检索逻辑。
-*   **[SPEC_20260306_CORE_IMPLEMENTATION_PLAN.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/SPEC_20260306_CORE_IMPLEMENTATION_PLAN.md)**
-    *   *说明*：核心重构与系统设计实施方案。详细规划了从《小黑屋 (A Dark Room)》 codebase 演进到《余烬回响》的 6 个系统阶段（Null/Spark, Camp, Abyss, Leap, Endgame, Meta-Progression）。
 
 ---
 
@@ -42,6 +40,8 @@
     *   *说明*：底层代码架构对比审计报告。详细梳理了《小黑屋》到《余烬回响》的演进细节，包含硬上限机制、SAN (理智) 及侵蚀系统设计、事件字典抽离等。
 *   **[AUDIT_20260422_UX_LOGIC_AUDIT.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/AUDIT_20260422_UX_LOGIC_AUDIT.md)**
     *   *说明*：深度 UX 与逻辑代码层审计。深入诊断游戏“丝滑感”降级的四大元凶（过渡动画缺失、全局状态暴力重绘导致布局抖动、遮罩模态打断心流、点击抖动防抖隐患）。
+*   **[AUDIT_20260703_DOCUMENTATION_COMPARISON.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/AUDIT_20260703_DOCUMENTATION_COMPARISON.md)**
+    *   *说明*：小黑屋与余烬回响游戏文档对比分析审计报告。逐一比对分析了原版小黑屋遗留的游戏文档，确认历史遗留的不匹配文档已在此前会被彻底删除或重写，保持本地仓储纯净。
 
 ---
 
@@ -73,13 +73,15 @@
 ### 5. 📈 活动执行与阶段交付 (Executions — `EXEC_`)
 承载开发任务拆解、方案计划书、 Walkthrough 交付汇报历史。
 
-*   *暂无历史执行文档，后续补充。*
+*   **[EXEC_20260703_AUDIO_RECONSTRUCTION_LOG.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/EXEC_20260703_AUDIO_RECONSTRUCTION_LOG.md)**
+    *   *说明*：音频系统重构与主题曲集成执行记录。详尽记录了本次开发会话中 ffmpeg 转换 Frozen_on_Silent_Stairs 视频至主题曲 MP3 的执行细节，以及搭建 Web Audio API 调度引擎、打通场景 BGM、事件悬念音轨、移动探索与战斗 SFX 的代码修改详情。
 
 ---
 
 ### 6. 🗺️ 迭代实施与重构计划 (Plans — `PLAN_`)
 主要承载系统升级、音视频与功能重构迭代的实施方案。
 
+*   **[PLAN_20260306_CORE_IMPLEMENTATION_PLAN.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/PLAN_20260306_CORE_IMPLEMENTATION_PLAN.md)**
+    *   *说明*：核心重构与系统设计实施方案。详细规划了从《小黑屋 (A Dark Room)》 codebase 演进到《余烬回响》的 6 个系统阶段（Null/Spark, Camp, Abyss, Leap, Endgame, Meta-Progression）。
 *   **[PLAN_20260703_AUDIO_RECONSTRUCTION_PLAN.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/PLAN_20260703_AUDIO_RECONSTRUCTION_PLAN.md)**
     *   *说明*：音频系统重构与音效还原方案。评估了原版 A Dark Room 遗留的 86 个 FLAC 音效文件资产状况，设计了基于 HTML5 Web Audio API 的音频管理器架构与环境音调度系统，并规划了游戏主题曲的植入配置。
-

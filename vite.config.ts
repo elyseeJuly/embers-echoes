@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 const basePath = process.env.CF_PAGES === '1'
   ? '/'
@@ -7,6 +8,17 @@ const basePath = process.env.CF_PAGES === '1'
 
 export default defineConfig({
   plugins: [
+    viteStaticCopy({
+      targets: [
+        { src: 'script', dest: '.' },
+        { src: 'css', dest: '.' },
+        { src: 'lib', dest: '.' },
+        { src: 'audio', dest: '.' },
+        { src: 'lang', dest: '.' },
+        { src: 'icons', dest: '.' },
+        { src: 'favicon.png', dest: '.' },
+      ]
+    }),
     VitePWA({
       registerType: 'prompt',
       includeAssets: [
