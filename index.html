@@ -35,6 +35,10 @@
   <script src="script/indexed_db.js"></script>
   <script src="script/pwa_updater.js"></script>
 
+  <!-- Responsive -->
+  <script src="script/responsive.js"></script>
+  <script src="script/orientation_prompt.js"></script>
+
   <!-- Core Systems -->
   <script src="script/audio_manager.js"></script>
   <script src="script/Button.js"></script>
@@ -79,6 +83,8 @@
     $(document).ready(function () {
       PWAUpdater.init();
       AudioManager.init();
+      Responsive.init();
+      OrientationPrompt.init();
 
       Engine.options.debug = true;
       Engine.init();

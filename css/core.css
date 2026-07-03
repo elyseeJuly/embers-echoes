@@ -623,6 +623,16 @@ body {
 }
 
 /* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  #ee-left {
+    width: clamp(160px, 22vw, 200px);
+  }
+
+  #ee-right {
+    width: clamp(240px, 30vw, 280px);
+  }
+}
+
 @media (max-width: 768px) {
   #ee-main {
     flex-direction: column;
@@ -643,6 +653,16 @@ body {
     padding: var(--space-sm) var(--space-sm);
     font-size: 0.8rem;
   }
+
+  #ee-header {
+    height: 56px;
+  }
+
+  #ee-header .tab {
+    font-size: 0.7rem;
+    padding: var(--space-xs) var(--space-sm);
+    letter-spacing: 1px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -653,6 +673,92 @@ body {
   #ee-content {
     padding: 45px var(--space-sm) var(--space-sm);
   }
+}
+
+.bp-mobile #ee-wrapper {
+  max-width: 100%;
+}
+
+.bp-tablet #ee-wrapper {
+  max-width: 100%;
+}
+
+.bp-desktop #ee-wrapper,
+.bp-wide #ee-wrapper {
+  max-width: 1200px;
+}
+
+.is-mobile-landscape #ee-header {
+  height: 48px;
+}
+
+.is-mobile-landscape #ee-content {
+  padding: 52px var(--space-sm) var(--space-sm);
+}
+
+/* ── Orientation Prompt ────────────────────────────────────── */
+.orientation-prompt {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(8px);
+  animation: fade-in 0.3s ease-out;
+}
+
+.orientation-prompt-content {
+  text-align: center;
+  padding: var(--space-2xl);
+  max-width: 320px;
+}
+
+.orientation-prompt-icon {
+  font-size: 4rem;
+  margin-bottom: var(--space-lg);
+  animation: rotate-phone 2s ease-in-out infinite;
+}
+
+@keyframes rotate-phone {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-90deg); }
+}
+
+.orientation-prompt-title {
+  font-family: var(--font-ui);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: var(--space-sm);
+}
+
+.orientation-prompt-desc {
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  color: var(--ash-gray);
+  margin-bottom: var(--space-lg);
+  line-height: 1.6;
+}
+
+.orientation-prompt-btn {
+  font-family: var(--font-terminal);
+  font-size: 0.85rem;
+  color: var(--ember-orange);
+  background: rgba(255, 106, 0, 0.1);
+  border: 1px solid var(--ember-orange);
+  border-radius: 2px;
+  padding: var(--space-sm) var(--space-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.orientation-prompt-btn:hover {
+  background: rgba(255, 106, 0, 0.2);
+  box-shadow: 0 0 15px rgba(255, 106, 0, 0.3);
 }
 
 /* ── PWA Update Prompt ──────────────────────────────────────── */
