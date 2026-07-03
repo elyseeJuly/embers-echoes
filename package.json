@@ -3,14 +3,38 @@
   "type": "module",
   "version": "1.0.0",
   "private": true,
-  "repository": "git@github.com:elyseeJuly/embers-echoes.git",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/elyseeJuly/embers-echoes.git"
+  },
   "author": "Michael Townsend <michael@doublespeakgames.com>",
   "license": "MPL-2.0",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "gh-pages -d dist",
+    "deploy:cf": "npm run build && wrangler versions upload --assets ./dist",
     "start": "node dev-server.js",
     "update_pot": "pybabel extract -F lang/babel.cfg -c \"TRANSLATORS\" script -o lang/adarkroom.pot"
   },
   "dependencies": {
     "express": "^4.17.1"
+  },
+  "description": "*“在热寂的绝对零度中，寻找最后一丝理智的火花。”*",
+  "main": "dev-server.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/elyseeJuly/embers-echoes/issues"
+  },
+  "homepage": "https://github.com/elyseeJuly/embers-echoes#readme",
+  "devDependencies": {
+    "gh-pages": "^6.3.0",
+    "vite": "^8.1.3",
+    "vite-plugin-pwa": "^1.3.0"
   }
 }

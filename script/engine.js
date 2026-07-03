@@ -440,39 +440,65 @@
     // ── Save / Load ───────────────────────────────────────────
 
     saveGame: function () {
+      var state = JSON.stringify($SM.options.state);
+
+      if (typeof IndexedDBStorage !== 'undefined') {
+        IndexedDBStorage.setSlot('autosave', state).catch(function (err) {
+          Engine.log('IndexedDB save failed: ' + err.message);
+        });
+      }
+
       if (typeof Storage !== 'undefined' && localStorage) {
         try {
-          var state = JSON.stringify($SM.options.state);
           localStorage.setItem('embersEchoes_save', state);
           localStorage.setItem('embersEchoes_timestamp', Date.now().toString());
-
-          // Show save notification briefly
-          var $notify = $('#saveNotify');
-          $notify.addClass('visible');
-          setTimeout(function () { $notify.removeClass('visible'); }, 1000);
         } catch (e) {
-          Engine.log('Save failed: ' + e.message);
+          Engine.log('LocalStorage save failed: ' + e.message);
         }
       }
+
+      var $notify = $('#saveNotify');
+      $notify.addClass('visible');
+      setTimeout(function () { $notify.removeClass('visible'); }, 1000);
     },
 
     loadGame: function () {
+      var loaded = false;
+
       if (typeof Storage !== 'undefined' && localStorage) {
         try {
           var savedState = localStorage.getItem('embersEchoes_save');
           if (savedState) {
             var state = JSON.parse(savedState);
             $SM.init({ state: state });
-            Engine.log('Game loaded from save');
-            return true;
+            Engine.log('Game loaded from localStorage');
+            loaded = true;
           }
         } catch (e) {
-          Engine.log('Load failed: ' + e.message);
+          Engine.log('LocalStorage load failed: ' + e.message);
         }
       }
-      // No save found — initialize fresh state
-      $SM.init({});
-      return false;
+
+      if (!loaded && typeof IndexedDBStorage !== 'undefined') {
+        IndexedDBStorage.getSlot('autosave').then(function (state) {
+          if (state) {
+            try {
+              var parsedState = JSON.parse(state);
+              $SM.init({ state: parsedState });
+              Engine.log('Game loaded from IndexedDB');
+            } catch (e) {
+              Engine.log('IndexedDB parse failed: ' + e.message);
+            }
+          }
+        }).catch(function (err) {
+          Engine.log('IndexedDB load failed: ' + err.message);
+        });
+      }
+
+      if (!loaded) {
+        $SM.init({});
+      }
+      return loaded;
     },
 
     /**

@@ -82,6 +82,10 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   cursor: default;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 ::selection {
@@ -649,4 +653,87 @@ body {
   #ee-content {
     padding: 45px var(--space-sm) var(--space-sm);
   }
+}
+
+/* ── PWA Update Prompt ──────────────────────────────────────── */
+.pwa-update-prompt {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  right: var(--space-lg);
+  background: var(--surface-2);
+  border: 1px solid var(--ember-orange);
+  border-radius: 4px;
+  padding: var(--space-md);
+  z-index: var(--z-modal);
+  box-shadow:
+    0 0 20px rgba(255, 106, 0, 0.2),
+    0 4px 15px rgba(0, 0, 0, 0.5);
+  max-width: 320px;
+  animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pwa-update-message {
+  font-family: var(--font-terminal);
+  font-size: 0.9rem;
+  color: var(--ember-orange);
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+}
+
+.pwa-update-desc {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--ash-gray);
+  margin-bottom: var(--space-md);
+}
+
+.pwa-update-buttons {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.pwa-update-btn {
+  flex: 1;
+  font-family: var(--font-terminal);
+  font-size: 0.75rem;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 1px solid transparent;
+}
+
+.pwa-update-btn-primary {
+  background: rgba(255, 106, 0, 0.2);
+  color: var(--ember-orange);
+  border-color: var(--ember-orange);
+}
+
+.pwa-update-btn-primary:hover {
+  background: rgba(255, 106, 0, 0.3);
+  box-shadow: 0 0 10px rgba(255, 106, 0, 0.3);
+}
+
+.pwa-update-btn-secondary {
+  background: transparent;
+  color: var(--ash-gray);
+  border-color: var(--ash-dim);
+}
+
+.pwa-update-btn-secondary:hover {
+  color: var(--ash-light);
+  border-color: var(--ash-gray);
 }
