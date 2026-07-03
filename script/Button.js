@@ -23,6 +23,20 @@ var Button = {
 		$btn.on('click', function () {
 			if (Button.isDisabled($btn) || $btn.data('onCooldown')) return;
 
+			// Play contextual button SFX
+			if (typeof AudioManager !== 'undefined') {
+				var txt = options.text || '';
+				if (txt.indexOf('制造') !== -1 || txt.indexOf('解译') !== -1 || txt.indexOf('合成') !== -1) {
+					AudioManager.playSFX('CRAFT');
+				} else if (txt.indexOf('建造') !== -1 || txt.indexOf('构筑') !== -1 || txt.indexOf('升级') !== -1) {
+					AudioManager.playSFX('BUILD');
+				} else if (txt.indexOf('交易') !== -1 || txt.indexOf('兑换') !== -1 || txt.indexOf('购买') !== -1) {
+					AudioManager.playSFX('BUY');
+				} else {
+					AudioManager.playSFX('BUY'); // default click BGM/SFX
+				}
+			}
+
 			// Check cost
 			var cost = $btn.data('cost');
 			if (cost) {

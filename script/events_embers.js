@@ -224,6 +224,19 @@ var Events = {
     showEvent: function (event) {
         Events._activeEvent = event;
 
+        // Play event BGM
+        if (typeof AudioManager !== 'undefined') {
+            var title = event.title || '';
+            var audioKey = 'EVENT_NOISES_INSIDE';
+            if (title === '低语者的馈赠') audioKey = 'EVENT_MYSTERIOUS_WANDERER';
+            else if (title === '迷失者的恳求') audioKey = 'EVENT_NOMAD';
+            else if (title === '数据风暴') audioKey = 'EVENT_NOISES_OUTSIDE';
+            else if (title === '主神的凝视') audioKey = 'EVENT_BEAST_ATTACK';
+            else if (title === '旧世界的回声') audioKey = 'EVENT_SCOUT';
+            
+            AudioManager.playEventBGM(audioKey);
+        }
+
         // Create event overlay
         var $overlay = $('<div>').attr('id', 'event-overlay')
             .css({
@@ -295,6 +308,12 @@ var Events = {
 
     closeEvent: function () {
         Events._activeEvent = null;
+        
+        // Restore background music
+        if (typeof AudioManager !== 'undefined') {
+            AudioManager.stopEventBGM();
+        }
+
         $('#event-overlay').css({ opacity: 0 });
         setTimeout(function () {
             $('#event-overlay').remove();

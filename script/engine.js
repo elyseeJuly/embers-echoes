@@ -298,24 +298,31 @@
       switch (phase) {
         case Engine.PHASES.NULL:
           $body.addClass('phase-null');
+          if (typeof AudioManager !== 'undefined') AudioManager.playBGM('THEME');
           break;
         case Engine.PHASES.SPARK:
           $body.addClass('phase-spark');
+          if (typeof AudioManager !== 'undefined') AudioManager.playBGM('MUSIC_FIRE_BURNING');
           break;
         case Engine.PHASES.CAMP:
           $body.addClass('phase-camp');
+          if (typeof AudioManager !== 'undefined') AudioManager.playBGM('MUSIC_SILENT_FOREST');
           break;
         case Engine.PHASES.ABYSS:
           $body.addClass('phase-abyss');
+          if (typeof AudioManager !== 'undefined') AudioManager.playBGM('MUSIC_WORLD');
           break;
         case Engine.PHASES.MAP:
           $body.addClass('phase-map');
+          if (typeof AudioManager !== 'undefined') AudioManager.playBGM('MUSIC_WORLD');
           break;
         case Engine.PHASES.SINK:
           $body.addClass('phase-sink');
+          if (typeof AudioManager !== 'undefined') AudioManager.playBGM('MUSIC_SPACE');
           break;
         case Engine.PHASES.END:
           $body.addClass('phase-end');
+          if (typeof AudioManager !== 'undefined') AudioManager.playBGM('THEME');
           break;
       }
 

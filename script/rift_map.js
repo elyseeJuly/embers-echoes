@@ -246,6 +246,11 @@ var RiftMap = {
             $SM.add('character.san', -sanCost);
         }
 
+        // Play footstep sound
+        if (typeof AudioManager !== 'undefined') {
+            var randStep = Math.floor(Math.random() * 6) + 1;
+            AudioManager.playSFX('FOOTSTEPS_' + randStep);
+        }
 
         // Perform move
         RiftMap.pos[0] = nx;

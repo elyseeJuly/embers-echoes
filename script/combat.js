@@ -62,8 +62,8 @@ var Combat = {
         $panel.hide();
     },
 
-    startRandomEncounter: function () {
-        var baseEnemy = Combat.ENEMIES[Math.floor(Math.random() * Combat.ENEMIES.length)];
+    startEncounter: function (enemy) {
+        var baseEnemy = enemy || Combat.ENEMIES[Math.floor(Math.random() * Combat.ENEMIES.length)];
 
         // God-Pressure scaling
         var godPressure = $SM.get('character.godPressure') || 0;
@@ -86,7 +86,22 @@ var Combat = {
         Combat.active = true;
         Combat.updateView();
 
+        // 播放遭遇战斗 BGM
+        if (typeof AudioManager !== 'undefined') {
+            var tier = 'ENCOUNTER_TIER_1';
+            if (Combat.enemyMaxHp >= 100) {
+                tier = 'ENCOUNTER_TIER_3';
+            } else if (Combat.enemyMaxHp >= 50) {
+                tier = 'ENCOUNTER_TIER_2';
+            }
+            AudioManager.playEventBGM(tier);
+        }
+
         Combat.tickTimer = setInterval(Combat.tick, 100); // 100ms combat ticks
+    },
+
+    startRandomEncounter: function () {
+        Combat.startEncounter();
     },
 
     tick: function () {
@@ -138,6 +153,19 @@ var Combat = {
         $('.enemy-side').addClass('combat-shake');
         setTimeout(function () { $('.enemy-side').removeClass('combat-shake'); }, 200);
 
+        // Play weapon attack SFX
+        if (typeof AudioManager !== 'undefined') {
+            var rand = Math.floor(Math.random() * 3) + 1;
+            var wpnName = (weapon.name || '').toLowerCase();
+            if (wpnName.indexOf('拳') !== -1 || wpnName.indexOf('刺') !== -1 || wpnName.indexOf('骨') !== -1) {
+                AudioManager.playSFX('WEAPON_UNARMED_' + rand);
+            } else if (wpnName.indexOf('枪') !== -1 || wpnName.indexOf('弩') !== -1 || wpnName.indexOf('弓') !== -1 || wpnName.indexOf('炮') !== -1) {
+                AudioManager.playSFX('WEAPON_RANGED_' + rand);
+            } else {
+                AudioManager.playSFX('WEAPON_MELEE_' + rand);
+            }
+        }
+
         Combat.enemyHp -= dmg;
         Notifications.notify('你造成了 ' + dmg + ' 伤害。');
 
@@ -161,6 +189,12 @@ var Combat = {
                 $('body').removeClass('glitch-blood');
             }
         }, 300);
+
+        // Play enemy impact SFX
+        if (typeof AudioManager !== 'undefined') {
+            var rand = Math.floor(Math.random() * 3) + 1;
+            AudioManager.playSFX('WEAPON_UNARMED_' + rand);
+        }
 
         Notifications.notify(Combat.enemyName + ' 造成了 ' + dmg + ' 伤害。');
 
@@ -219,6 +253,12 @@ var Combat = {
     endEncounter: function (victory) {
         Combat.active = false;
         clearInterval(Combat.tickTimer);
+        
+        // Restore background music
+        if (typeof AudioManager !== 'undefined') {
+            AudioManager.stopEventBGM();
+        }
+
         $('#combat-panel').hide();
         if (victory) {
             $('#map-panel').show();

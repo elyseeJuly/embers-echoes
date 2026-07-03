@@ -74,3 +74,12 @@
 承载开发任务拆解、方案计划书、 Walkthrough 交付汇报历史。
 
 *   *暂无历史执行文档，后续补充。*
+
+---
+
+### 6. 🗺️ 迭代实施与重构计划 (Plans — `PLAN_`)
+主要承载系统升级、音视频与功能重构迭代的实施方案。
+
+*   **[PLAN_20260703_AUDIO_RECONSTRUCTION_PLAN.md](file:///Users/quantumrose/Documents/Emberois/embers-echoes/docs/PLAN_20260703_AUDIO_RECONSTRUCTION_PLAN.md)**
+    *   *说明*：音频系统重构与音效还原方案。评估了原版 A Dark Room 遗留的 86 个 FLAC 音效文件资产状况，设计了基于 HTML5 Web Audio API 的音频管理器架构与环境音调度系统，并规划了游戏主题曲的植入配置。
+

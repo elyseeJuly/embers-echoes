@@ -36,6 +36,7 @@
   <script src="script/pwa_updater.js"></script>
 
   <!-- Core Systems -->
+  <script src="script/audio_manager.js"></script>
   <script src="script/Button.js"></script>
   <script src="script/state_manager.js"></script>
   <script src="script/notifications.js"></script>
@@ -77,6 +78,7 @@
   <script>
     $(document).ready(function () {
       PWAUpdater.init();
+      AudioManager.init();
 
       Engine.options.debug = true;
       Engine.init();
