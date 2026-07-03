@@ -37,5 +37,8 @@
     "vite": "^8.1.3",
     "vite-plugin-pwa": "^1.3.0",
     "vite-plugin-static-copy": "^4.1.1"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }
