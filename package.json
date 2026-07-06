@@ -14,7 +14,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "gh-pages -d dist",
-    "deploy:cf": "CF_PAGES=1 npm run build && wrangler deploy",
+    "deploy:cf": "CF_PAGES=1 npm run build && wrangler pages deploy ./dist --project-name=embers-echoes",
     "start": "node dev-server.js",
     "update_pot": "pybabel extract -F lang/babel.cfg -c \"TRANSLATORS\" script -o lang/adarkroom.pot"
   },
