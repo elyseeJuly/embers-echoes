@@ -12,8 +12,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "deploy": "gh-pages -d dist",
+    "preview": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy",
     "deploy:cf": "CF_PAGES=1 npm run build && wrangler pages deploy ./dist --project-name=embers-echoes",
     "start": "node dev-server.js",
     "update_pot": "pybabel extract -F lang/babel.cfg -c \"TRANSLATORS\" script -o lang/adarkroom.pot"
@@ -33,11 +33,12 @@
   },
   "homepage": "https://github.com/elyseeJuly/embers-echoes#readme",
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.43.0",
     "gh-pages": "^6.3.0",
     "vite": "^8.1.3",
     "vite-plugin-pwa": "^1.3.0",
     "vite-plugin-static-copy": "^4.1.1",
-    "wrangler": "^4.10.0"
+    "wrangler": "^4.107.0"
   },
   "packageManager": "npm"
 }
