@@ -1,5 +1,5 @@
 # Cloudflare 部署问题排查与解决记录
-> **Date**: 2026-07-08
+> **Date**: 2026-07-06
 > **Status**: 已解决
 > **Category**: History & Development Records (`HIST_`)
 > **Scope**: 余烬回响 Cloudflare Pages / Workers 部署

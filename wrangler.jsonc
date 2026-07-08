@@ -1,2 +1,13 @@
 {
-  "name
+  "name": "embers-echoes",
+  "compatibility_date": "2026-07-06",
+  "main": "src/worker.js",
+  "build": {
+    "command": "CF_PAGES=1 npm run build",
+    "cwd": "."
+  },
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
