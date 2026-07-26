@@ -92,7 +92,9 @@ var Sanity = {
     actionGaze: function () {
         if (Sanity._gazeCooldown > 0) return;
         var ember = $SM.get('stores.ember') || 0;
-        var san = $SM.get('character.san') || 50;
+        // SAN=0 是合法的 mindbreak 状态，不能用 `|| 50`
+        var sanRaw = $SM.get('character.san');
+        var san = (sanRaw === undefined || sanRaw === null) ? 50 : sanRaw;
 
         if (ember < 10) { Notifications.notify('余烬不足以支撑观察屏障。'); return; }
         if (san < 5) { Notifications.notify('理智已无法承受更多高维画面。'); return; }
@@ -182,8 +184,10 @@ var Sanity = {
                     Button.setDisabled($btnGaze, true);
                     $btnGaze.find('span').text('【冷却中 ' + Sanity._gazeCooldown + 's】');
                 } else {
-                    var san = $SM.get('character.san') || 50;
-                    if (san < 5) {
+                    // SAN=0 是合法的 mindbreak 状态，不能用 `|| 50`
+                    var sanRaw2 = $SM.get('character.san');
+                    var san2 = (sanRaw2 === undefined || sanRaw2 === null) ? 50 : sanRaw2;
+                    if (san2 < 5) {
                         Button.setDisabled($btnGaze, true);
                         $btnGaze.find('span').text('【无法承受深渊】');
                     } else {
@@ -211,7 +215,9 @@ var Sanity = {
      * Called every tick by the engine (Phase 3+)
      */
     tick: function () {
-        var san = $SM.get('character.san') || 50;
+        // 注意：不能用 `|| 50`，SAN=0（mindbreak）会被当成 falsy 跳到 50
+        var sanRaw = $SM.get('character.san');
+        var san = (sanRaw === undefined || sanRaw === null) ? 50 : sanRaw;
         var maxSan = Sanity.getMaxSan();
         var erosion = $SM.get('character.erosion') || 0;
         var zone = Sanity.getZone(san, maxSan);
@@ -268,7 +274,11 @@ var Sanity = {
     },
 
     getZone: function (san, maxSan) {
-        if (san === undefined) san = $SM.get('character.san') || 50;
+        if (san === undefined) {
+            // 注意：不能用 `|| 50`，SAN=0（mindbreak）会被当成 falsy 跳到 50
+            var sanRaw = $SM.get('character.san');
+            san = (sanRaw === undefined || sanRaw === null) ? 50 : sanRaw;
+        }
         if (maxSan === undefined) maxSan = Sanity.getMaxSan();
 
         if (san <= 0) return 'mindbreak';
@@ -300,7 +310,9 @@ var Sanity = {
      */
     updateVisuals: function () {
         var $body = $('body');
-        var san = $SM.get('character.san') || 50;
+        // SAN=0 是合法的 mindbreak 状态，不能用 `|| 50`
+        var sanRaw = $SM.get('character.san');
+        var san = (sanRaw === undefined || sanRaw === null) ? 50 : sanRaw;
         var maxSan = Sanity.getMaxSan();
         var zone = Sanity.getZone(san, maxSan);
 

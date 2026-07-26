@@ -77,22 +77,33 @@ var Endgame = {
     /**
      * Evaluate which ending the player qualifies for.
      * Returns 'bad', 'normal', or 'true'.
+     *
+     * 设计意图：
+     *   - bad: 无任何遗物 → 主神抹杀
+     *   - normal: 有部分遗物但缺 relic_carbon，或只有 relic_carbon 但无法回答 q_entropy/q_paradox
+     *   - true: 同时拥有 relic_carbon 与至少一个可回答前两题的遗物
+     *
+     * 注意：relic_carbon 是 q_variable 的合法提交物，但不能仅凭它判定 true 结局，
+     * 否则玩家只拿到 carbon 就会跳过前两题直接进入 inquiry，必然落入 loop/trapped。
      */
     evaluateEndings: function () {
         if (!Narrative.dict || !Narrative.dict.finalInquiry) return 'bad';
         var questions = Narrative.dict.finalInquiry.questions || [];
-        var hasAnyValidRelic = false;
         var hasCarbon = $SM.hasRelic('relic_carbon');
+        var canAnswerPriorQuestion = false;
 
+        // 只检查前两题（q_entropy / q_paradox）——q_variable 由 hasCarbon 单独保证
         for (var i = 0; i < questions.length; i++) {
             var q = questions[i];
+            if (q.validRelics.indexOf('relic_carbon') !== -1) continue; // 跳过 carbon 锚题
             for (var j = 0; j < q.validRelics.length; j++) {
-                if ($SM.hasRelic(q.validRelics[j])) { hasAnyValidRelic = true; break; }
+                if ($SM.hasRelic(q.validRelics[j])) { canAnswerPriorQuestion = true; break; }
             }
+            if (canAnswerPriorQuestion) break;
         }
 
-        if (hasCarbon && hasAnyValidRelic) return 'true';
-        if (hasAnyValidRelic) return 'normal';
+        if (hasCarbon && canAnswerPriorQuestion) return 'true';
+        if (hasCarbon || canAnswerPriorQuestion) return 'normal';
         return 'bad';
     },
 

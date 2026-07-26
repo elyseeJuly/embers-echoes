@@ -1,0 +1,100 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Test & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── T0/T1/T2: 单元 + 集成测试（含覆盖率） ──────────────
+      - name: Run unit & integration tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./coverage/
+          retention-days: 14
+
+      # ── T3: 无头模拟烟囱测试 ────────────────────────────────
+      - name: Run simulation smoke gate
+        run: npm run test:sim:smoke
+
+      - name: Run simulation regression gate
+        run: npm run test:sim:regression
+
+      - name: Upload simulation diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-smoke-diagnostics
+          path: |
+            ./test/simulation/
+            ./playwright-report/
+          retention-days: 7
+
+      # ── 构建 ────────────────────────────────────────────────
+      - name: Build for production
+        env:
+          GITHUB_ACTIONS: "true"
+        run: npm run build
+
+      - name: Upload build artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-build
+          path: ./dist/
+          retention-days: 3
+
+      # ── T4: Playwright E2E ──────────────────────────────────
+      # PR 仅跑 chromium 桌面端，main 分支跑完整矩阵
+      - name: Install Chromium for PR E2E
+        if: github.event_name == 'pull_request'
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Chromium E2E gate for PR
+        if: github.event_name == 'pull_request'
+        run: npx playwright test --project=chromium-desktop
+
+      - name: Install full Playwright browser matrix on main
+        if: github.event_name == 'push'
+        run: npx playwright install --with-deps
+
+      - name: Run full Playwright E2E matrix on main
+        if: github.event_name == 'push'
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: ./playwright-report/
+          retention-days: 14

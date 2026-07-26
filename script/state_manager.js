@@ -296,10 +296,9 @@ var StateManager = {
 					amount = Math.floor(amount * productionMultiplier);
 				}
 				// Ember reflux perk: +15% ember on top
-				if (amount > 0 && resource === 'ember') {
-					var buffs = this.get('character.buffs') || {};
-					if (buffs['ember_reflux']) { amount = Math.floor(amount * 1.15); }
-				}
+			if (amount > 0 && resource === 'ember') {
+				if (this.hasPerk('ember_reflux')) { amount = Math.floor(amount * 1.15); }
+			}
 				this.add('stores.' + resource, amount, true);
 			}
 		}

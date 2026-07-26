@@ -1,0 +1,79 @@
+name: Headless Simulation Nightly
+
+on:
+  schedule:
+    # 每天 UTC 18:30 运行（北京时间次日 02:30）
+    - cron: '30 18 * * *'
+  workflow_dispatch:
+    inputs:
+      balance_runs:
+        description: '平衡性统计：每个策略运行的 seed 数量'
+        required: false
+        default: '5'
+      balance_ticks:
+        description: '平衡性统计：每次运行的目标 tick 数'
+        required: false
+        default: '150'
+      soak_runs:
+        description: 'Soak 测试：运行次数'
+        required: false
+        default: '6'
+      soak_ticks:
+        description: 'Soak 测试：每次运行的目标 tick 数'
+        required: false
+        default: '300'
+
+concurrency:
+  group: headless-simulation-nightly
+  cancel-in-progress: true
+
+jobs:
+  simulation-audit:
+    name: Balance, regression & soak audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── 回归种子库：确保所有登记 seed 可复现 ────────────────
+      - name: Run regression seed bank
+        run: npm run test:sim:regression
+
+      # ── 平衡性统计：多策略资源分布与 phase 推进 ─────────────
+      - name: Run multi-seed balance matrix
+        env:
+          SIM_MODE: balance
+          SIM_BALANCE_RUNS: ${{ inputs.balance_runs || '5' }}
+          SIM_BALANCE_TICKS: ${{ inputs.balance_ticks || '150' }}
+        run: npm run test:sim:balance
+
+      # ── Soak 测试：长周期稳定性 ─────────────────────────────
+      - name: Run long-horizon soak matrix
+        env:
+          SIM_SOAK: '1'
+          SIM_SOAK_RUNS: ${{ inputs.soak_runs || '6' }}
+          SIM_SOAK_TICKS: ${{ inputs.soak_ticks || '300' }}
+          SIM_SOAK_BASE_SEED: '2026072699'
+        run: npm run test:sim:soak
+
+      # ── 上传审计报告 ────────────────────────────────────────
+      - name: Upload simulation audit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-audit-reports
+          path: |
+            ./test/simulation/
+            ./coverage/
+          retention-days: 30
