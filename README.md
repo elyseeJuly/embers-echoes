@@ -40,23 +40,83 @@
 
 ## 🛠️ 本地运行与开发 (Development)
 
-本项目采用纯前端技术栈写成，**没有任何服务端依赖或构建工具**。
+本项目基于纯前端技术栈，使用 Vite 作为构建工具，已升级为完整的 PWA 应用。
 
-1. 克隆或下载本仓库到本地：
-   ```bash
-   git clone https://github.com/elyseeJuly/embers-echoes.git
-   ```
-2. 直接在浏览器中双击打开 `index.html` 即可运行游戏。
-3. （可选）如果你需要使用本地保存等功能，推荐使用一个轻量级的本地 HTTP 服务器启动，例如：
-   ```bash
-   python -m http.server 8080
-   # 然后在浏览器访问 http://localhost:8080
-   ```
+### 快速开始
+
+```bash
+# 1. 克隆仓库
+git clone https://github.com/elyseeJuly/embers-echoes.git
+cd embers-echoes
+
+# 2. 安装依赖（要求 Node.js ≥ 22）
+npm ci
+
+# 3. 启动开发服务器（http://localhost:8080）
+npm start          # 等价于 node dev-server.js
+
+# 或使用 Vite dev 模式（HMR）
+npm run dev
+```
+
+### 构建与部署
+
+```bash
+# 生产构建（输出至 dist/，含 Service Worker 与 manifest）
+GITHUB_ACTIONS=true npm run build
+
+# 本地预览构建产物
+npm run preview
+```
+
+部署通道：
+- **GitHub Pages**：push 到 `main` 自动触发 `.github/workflows/static.yml`
+- **Cloudflare Pages**：`npm run deploy:cf`（需配置 wrangler）
 
 **技术栈结构：**
-- **HTML/CSS**：纯手工编写的语义化标签和 Vanilla CSS（使用了大量的 CSS 变量和 Keyframe 动画来实现氛围感）。
-- **JavaScript**：采用了模块化的原生 JS 开发（包括 `engine.js`, `narrative.js`, `state_manager.js`, `rift_map.js` 等），并通过 jQuery 辅以简便的 DOM 操作。
-- **数据存储**：完全依赖浏览器的 `localStorage` 实现存档以及跨轮回的 Meta 进度存储。
+- **HTML/CSS**：纯手工编写的语义化标签和 Vanilla CSS（大量 CSS 变量与 Keyframe 动画营造氛围感）。
+- **JavaScript**：模块化的原生 ES5 + jQuery 1.10（`engine.js` / `narrative.js` / `state_manager.js` / `rift_map.js` 等 26 个脚本）。
+- **构建工具**：Vite 8 + `vite-plugin-pwa` + `vite-plugin-static-copy`。
+- **数据存储**：IndexedDB 主存储 + localStorage 双写，支持离线启动与跨轮回 Meta 进度。
+- **PWA**：Service Worker 两层缓存策略（pre-cache + runtime cache），支持「添加到主屏幕」与离线游玩。
+
+---
+
+## 🧪 测试体系 (Testing)
+
+本项目参照 [Beyond-the-Light-Cone](https://github.com/elyseeJuly/Beyond-the-Light-Cone) 的 `TEST_20260517_HEADLESS_AUTOPLAY_STANDARD` 建立六层测试架构：
+
+| 层次 | 名称 | 工具 | 用例数 | 用途 |
+|:---|:---|:---|:---|:---|
+| T0 | 静态与数据契约 | Vitest | 4 | 项目结构与配置完整性 |
+| T1 | 单元测试 | Vitest + jsdom | 118 | 单模块隔离验证 |
+| T2 | 集成测试 | Vitest + jsdom | 77 | 跨模块链路协作 |
+| T3 | Headless 模拟 | 自研 Adapter + SeededRng | 12 (+3) | 长周期策略 AI 推进 |
+| T4 | 浏览器 E2E | Playwright | 105 | 5 浏览器矩阵真实交互 |
+| T5 | 体验审计 | 人工评审 | — | 视觉/叙事/音频/性能 |
+
+### 常用测试命令
+
+```bash
+npm test                    # T0–T3 全量回归（约 4s）
+npm run test:coverage       # 含覆盖率报告
+npm run test:sim:smoke      # T3 烟囱门禁
+npm run test:sim:regression # T3 登记 seed 回归
+npm run test:e2e            # T4 全浏览器矩阵（需先 npx playwright install）
+npm run test:e2e:smoke      # T4 仅 @smoke 标签
+```
+
+详见 [docs/TEST_20260726_TESTING_SYSTEM_STANDARD.md](docs/TEST_20260726_TESTING_SYSTEM_STANDARD.md)。
+
+---
+
+## 🤖 持续集成 (CI/CD)
+
+| Workflow | 触发 | 内容 |
+|:---|:---|:---|
+| [ci.yml](.github/workflows/ci.yml) | `pull_request` / `push` | T0–T2 覆盖率 + T3 门禁 + Build + T4 E2E |
+| [simulation-nightly.yml](.github/workflows/simulation-nightly.yml) | cron `30 18 * * *` | T3 回归 + 平衡性 + soak 长周期审计 |
+| [static.yml](.github/workflows/static.yml) | `push` to main | 构建 dist/ 并部署至 GitHub Pages |
 
 ---
 
